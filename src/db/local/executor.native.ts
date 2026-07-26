@@ -19,14 +19,27 @@ const DB_VERSION = 1
 // duplicate/ambiguous column names.
 export async function createNativeExecutor(): Promise<SqliteExecutor> {
   const sqlite = new SQLiteConnection(CapacitorSQLite)
-  const conn: SQLiteDBConnection = await sqlite.createConnection(
-    DB_NAME,
-    false,
-    'no-encryption',
-    DB_VERSION,
-    false,
-  )
-  await conn.open()
+
+  // The plugin's native singleton keeps a connection registered even when
+  // open() or a later boot step fails, so an unconditional createConnection()
+  // on retry throws "Connection catatlaba already exists". Documented recovery
+  // pattern: reuse the registered connection when the JS/native registries
+  // agree it exists, otherwise create a fresh one.
+  const consistency = await sqlite.checkConnectionsConsistency()
+  const isConn = (await sqlite.isConnection(DB_NAME, false)).result
+  const conn: SQLiteDBConnection =
+    consistency.result && isConn
+      ? await sqlite.retrieveConnection(DB_NAME, false)
+      : await sqlite.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false)
+
+  try {
+    await conn.open()
+  } catch (error) {
+    // Best-effort cleanup so a failed open() leaves no stale registration
+    // behind to break the next retry attempt.
+    await sqlite.closeConnection(DB_NAME, false).catch(() => {})
+    throw error
+  }
 
   return {
     async run(sql, params = []) {

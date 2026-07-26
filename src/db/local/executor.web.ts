@@ -7,7 +7,16 @@ let dbPromise: Promise<Database> | null = null
 
 function openDatabase(): Promise<Database> {
   if (!dbPromise) {
-    dbPromise = initSqlJs({ locateFile: () => wasmUrl }).then((SQL) => new SQL.Database())
+    const attempt = initSqlJs({ locateFile: () => wasmUrl }).then((SQL) => new SQL.Database())
+    // Clear the cache on failure so the next call re-attempts instead of
+    // replaying the same cached rejection forever. Caveat: sql.js itself also
+    // caches its own module-level init promise, including rejections, so an
+    // in-place retry cannot recover a failed wasm fetch — a full page reload
+    // (AppInit's "Muat ulang aplikasi" button) is the guaranteed web recovery.
+    attempt.catch(() => {
+      if (dbPromise === attempt) dbPromise = null
+    })
+    dbPromise = attempt
   }
   return dbPromise
 }
