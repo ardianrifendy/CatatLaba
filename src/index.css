@@ -31,6 +31,34 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Dark UA-rendered controls (scrollbars, form internals) — RULES.md bans
+     light native scrollbars on the dark glass theme. */
+  html {
+    color-scheme: dark;
+  }
+
+  /* Styled scrollbars matching the glass theme (Firefox properties). */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.2) transparent;
+  }
+
+  /* WebKit/Blink fallback for the same look. */
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background-color: rgb(255 255 255 / 0.2);
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(255 255 255 / 0.3);
+  }
+  *::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
 }
 
 /* Bottom sheet + overlay enter/exit (Radix data-state driven) */
@@ -61,6 +89,28 @@
 @media (prefers-reduced-motion: reduce) {
   .sheet-overlay[data-state='open'],
   .sheet-content[data-state='open'] {
+    animation: none;
+  }
+}
+
+/* Toast enter (GlassToastViewport) */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast-item {
+  animation: toast-in 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-item {
     animation: none;
   }
 }
