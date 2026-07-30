@@ -2,7 +2,7 @@ import type { DbContext } from '@/db/local'
 import { hasSupabaseConfig } from '@/lib/env'
 import { commonText } from '@/lib/ui-text'
 import { synchronize, type SyncResult } from './engine'
-import { clearSession, loadSession, signInWithPassword, signOut, signUpWithPassword } from './supabase'
+import { clearSession, getGoogleOAuthUrl, loadSession, parseOAuthCallbackFromUrl, signInWithPassword, signOut, signUpWithPassword } from './supabase'
 import type { SyncSnapshot } from './types'
 
 const debounceMs = 1_500
@@ -14,15 +14,19 @@ export interface SyncController {
   schedule(): void
   signIn(identifier: string, password: string): Promise<void>
   signUp(email: string, password: string, fullName?: string, phone?: string): Promise<boolean>
+  signInWithGoogle(): void
   signOut(): Promise<void>
 }
 
 export function createSyncController(ctx: DbContext): SyncController {
+  const oauthSession = parseOAuthCallbackFromUrl()
+  const initialSession = oauthSession ?? loadSession()
+
   let snapshot: SyncSnapshot = {
-    status: hasSupabaseConfig ? (loadSession() ? 'idle' : 'signed_out') : 'offline',
+    status: hasSupabaseConfig ? (initialSession ? 'idle' : 'signed_out') : 'offline',
     lastSyncedAt: null,
     message: hasSupabaseConfig ? null : commonText.settings.sync.offline,
-    session: loadSession(),
+    session: initialSession,
   }
   let timer: ReturnType<typeof setTimeout> | null = null
   let inFlight: Promise<SyncResult | null> | null = null
@@ -81,6 +85,10 @@ export function createSyncController(ctx: DbContext): SyncController {
       publish({ ...snapshot, status: 'idle', message: null, session })
       await syncNow()
       return true
+    },
+    signInWithGoogle() {
+      const url = getGoogleOAuthUrl()
+      window.location.href = url
     },
     async signOut() {
       const session = snapshot.session

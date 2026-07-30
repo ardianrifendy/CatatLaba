@@ -32,6 +32,59 @@ export function clearSession(): void {
   window.localStorage.removeItem(sessionKey)
 }
 
+export function getGoogleOAuthUrl(redirectTo?: string): string {
+  const config = requireSupabaseConfig()
+  const redirect = redirectTo ?? window.location.origin
+  return `${config.url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirect)}`
+}
+
+export function parseOAuthCallbackFromUrl(): SyncSession | null {
+  try {
+    const hash = window.location.hash
+    if (!hash || !hash.includes('access_token=')) return null
+    
+    const params = new URLSearchParams(hash.substring(1))
+    const accessToken = params.get('access_token')
+    const refreshToken = params.get('refresh_token')
+    const expiresInRaw = params.get('expires_in')
+    
+    if (!accessToken || !refreshToken) return null
+    
+    const expiresIn = expiresInRaw ? parseInt(expiresInRaw, 10) : 3600
+    
+    // Parse JWT to extract user ID & email
+    const parts = accessToken.split('.')
+    let userId = ''
+    let email: string | null = null
+    if (parts.length >= 2 && parts[1]) {
+      try {
+        const payload = JSON.parse(atob(parts[1]))
+        userId = payload.sub ?? ''
+        email = payload.email ?? null
+      } catch {
+        // Fallback
+      }
+    }
+    
+    if (!userId) return null
+    
+    const session: SyncSession = {
+      accessToken,
+      refreshToken,
+      expiresAt: Date.now() + expiresIn * 1000,
+      userId,
+      email,
+    }
+    
+    saveSession(session)
+    // Clean URL hash
+    window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    return session
+  } catch {
+    return null
+  }
+}
+
 export async function signInWithPassword(identifier: string, password: string): Promise<SyncSession> {
   const config = requireSupabaseConfig()
   const payload = await requestJson<AuthPayload>(`${config.url}/auth/v1/token?grant_type=password`, {
