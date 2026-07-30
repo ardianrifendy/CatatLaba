@@ -34,13 +34,10 @@ export function clearSession(): void {
 
 export async function signInWithPassword(identifier: string, password: string): Promise<SyncSession> {
   const config = requireSupabaseConfig()
-  const isEmail = identifier.includes('@')
-  const body = isEmail ? { email: identifier, password } : { phone: identifier, password }
-  
   const payload = await requestJson<AuthPayload>(`${config.url}/auth/v1/token?grant_type=password`, {
     method: 'POST',
     headers: authHeaders(config.anonKey),
-    body: JSON.stringify(body),
+    body: JSON.stringify({ email: identifier, password }),
   })
   const session = sessionFromPayload(payload)
   saveSession(session)
@@ -62,10 +59,9 @@ export async function signUpWithPassword(
       body: JSON.stringify({
         email,
         password,
-        phone: phone ? phone : undefined,
         data: {
-          full_name: fullName,
-          phone_number: phone,
+          full_name: fullName ?? null,
+          phone_number: phone ?? null,
         },
       }),
     },
