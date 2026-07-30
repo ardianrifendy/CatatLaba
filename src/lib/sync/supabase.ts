@@ -113,12 +113,16 @@ async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
     const response = await fetch(url, { ...init, signal: controller.signal })
     const body: unknown = await response.json().catch(() => null)
     if (!response.ok) {
-      throw new Error(remoteMessage(body) ?? commonText.settings.sync.requestFailed(response.status))
+      const msg = remoteMessage(body)
+      throw new Error(msg ?? commonText.settings.sync.requestFailed(response.status))
     }
     return body as T
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw new Error(commonText.settings.sync.requestTimeout)
+    }
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Gagal terhubung ke server. Pastikan koneksi internet HP Anda aktif.')
     }
     throw error
   } finally {
@@ -128,8 +132,14 @@ async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
 
 function remoteMessage(value: unknown): string | null {
   if (!isRecord(value)) return null
-  const message = value.message ?? value.error_description
-  return typeof message === 'string' ? message : null
+  const message = value.message ?? value.error_description ?? value.msg ?? value.error
+  if (typeof message === 'string') {
+    if (message.includes('User already registered')) return 'Email ini sudah terdaftar. Silakan Masuk.'
+    if (message.includes('Password should be at least')) return 'Kata sandi minimal 6 karakter.'
+    if (message.includes('Invalid login credentials')) return 'Email atau kata sandi salah.'
+    return message
+  }
+  return null
 }
 
 function isSession(value: unknown): value is SyncSession {
