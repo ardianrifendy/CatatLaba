@@ -3,6 +3,8 @@ import { GlassButton } from '@/components/ui/GlassButton'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { getContext, initDb } from '@/db/local'
 import { createRepositories, type Repositories } from '@/db/repositories'
+import { createSyncController, type SyncController } from '@/lib/sync/controller'
+import { wrapRepositoriesForSync } from '@/lib/sync/repository-wrapper'
 import { commonText } from '@/lib/ui-text'
 import { AppShell } from './AppShell'
 import { AppProviders } from './providers'
@@ -11,15 +13,31 @@ import { AppProviders } from './providers'
 // effects (mount -> unmount -> mount in dev) cannot run initDb() or
 // createRepositories() twice. Only the retry button after a failure clears the
 // cache and re-runs the whole sequence.
-let bootPromise: Promise<Repositories> | null = null
+interface BootResult {
+  repos: Repositories
+  sync: SyncController
+}
 
-function boot(): Promise<Repositories> {
+let bootPromise: Promise<BootResult> | null = null
+
+function boot(): Promise<BootResult> {
   bootPromise ??= (async () => {
     const { migrationsApplied } = await initDb()
     if (import.meta.env.DEV) {
       console.info(`[boot] local db ready — applied migrations: ${migrationsApplied}`)
     }
-    return createRepositories(getContext())
+    const sync = createSyncController(getContext())
+    const repos = wrapRepositoriesForSync(createRepositories(getContext()), sync.schedule)
+    const generated = await repos.recurring.generateDue()
+    if (generated.ok) {
+      if (import.meta.env.DEV && generated.value.length > 0) {
+        console.info(`[boot] generated recurring transactions: ${generated.value.length}`)
+      }
+    } else {
+      console.error('[boot] recurring generation failed:', generated.error)
+    }
+    void sync.syncNow()
+    return { repos, sync }
   })()
   return bootPromise
 }
@@ -27,7 +45,7 @@ function boot(): Promise<Repositories> {
 type BootState =
   | { readonly status: 'loading' }
   | { readonly status: 'error' }
-  | { readonly status: 'ready'; readonly repos: Repositories }
+  | { readonly status: 'ready'; readonly repos: Repositories; readonly sync: SyncController }
 
 export function AppInit() {
   const [state, setState] = useState<BootState>({ status: 'loading' })
@@ -36,8 +54,8 @@ export function AppInit() {
     if (state.status !== 'loading') return
     let cancelled = false
     boot().then(
-      (repos) => {
-        if (!cancelled) setState({ status: 'ready', repos })
+      (result) => {
+        if (!cancelled) setState({ status: 'ready', repos: result.repos, sync: result.sync })
       },
       (error: unknown) => {
         if (cancelled) return
@@ -52,7 +70,7 @@ export function AppInit() {
 
   if (state.status === 'ready') {
     return (
-      <AppProviders repos={state.repos}>
+      <AppProviders repos={state.repos} sync={state.sync}>
         <AppShell />
       </AppProviders>
     )

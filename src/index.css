@@ -6,10 +6,129 @@
   --color-income: #30d158;
   --color-expense: #ff453a;
   --color-warning: #ffd60a;
+  --color-background: var(--app-background);
+  --color-foreground: var(--app-foreground);
+  --color-foreground-subtle: var(--app-foreground-subtle);
+  --color-muted-foreground: var(--app-muted-foreground);
+  --color-border: var(--app-border);
+  --color-glass-border: var(--app-border);
+  --color-glass: var(--app-glass);
+  --color-glass-strong: var(--app-glass-strong);
+  --color-glass-hover: var(--app-glass-hover);
+  --color-glass-active: var(--app-glass-active);
+  --color-overlay: var(--app-overlay);
+  --shadow-glass: var(--app-glass-shadow);
   --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 @layer base {
+  :root,
+  html[data-theme='dark'] {
+    color-scheme: dark;
+    --app-background: #0b0e14;
+    --app-foreground: #f4f4f6;
+    --app-foreground-subtle: #d1d5db;
+    --app-muted-foreground: #9ca3af;
+    --app-border: rgba(255, 255, 255, 0.12);
+    --app-glass: rgba(20, 26, 38, 0.65);
+    --app-glass-strong: rgba(26, 34, 48, 0.82);
+    --app-glass-hover: rgba(45, 55, 72, 0.65);
+    --app-glass-active: rgba(60, 72, 92, 0.75);
+    --app-overlay: rgba(0, 0, 0, 0.72);
+    --app-glass-shadow:
+      0 20px 48px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    --app-background-image:
+      radial-gradient(1000px 700px at 10% -10%, rgba(0, 122, 255, 0.22), transparent 60%),
+      radial-gradient(800px 600px at 100% 25%, rgba(48, 209, 88, 0.12), transparent 60%),
+      radial-gradient(700px 500px at 50% 90%, rgba(191, 90, 242, 0.1), transparent 60%),
+      linear-gradient(180deg, #0e131f 0%, #07090e 100%);
+  }
+
+  html[data-theme='light'] {
+    color-scheme: light;
+    --app-background: #f2f4f8;
+    --app-foreground: #0f172a;
+    --app-foreground-subtle: #334155;
+    --app-muted-foreground: #64748b;
+    --app-border: rgba(226, 232, 240, 0.8);
+    --app-glass: rgba(255, 255, 255, 0.78);
+    --app-glass-strong: rgba(255, 255, 255, 0.92);
+    --app-glass-hover: rgba(248, 250, 252, 0.95);
+    --app-glass-active: rgba(241, 245, 249, 0.98);
+    --app-overlay: rgba(15, 23, 42, 0.45);
+    --app-glass-shadow:
+      0 16px 36px rgba(148, 163, 184, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    --app-background-image:
+      radial-gradient(900px 650px at 5% -5%, rgba(0, 122, 255, 0.14), transparent 60%),
+      radial-gradient(800px 550px at 95% 20%, rgba(48, 209, 88, 0.1), transparent 60%),
+      linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+
+  .ios-glass-nav {
+    -webkit-backdrop-filter: blur(22px) saturate(1.35);
+    backdrop-filter: blur(22px) saturate(1.35);
+    box-shadow:
+      0 18px 42px rgb(44 62 88 / 0.18),
+      inset 0 1px 0 rgb(255 255 255 / 0.42);
+  }
+
+  .ios-mobile-tabbar {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ios-mobile-tab-indicator {
+    position: absolute;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    width: calc((100% - 1rem) / 5);
+    border-radius: 1rem;
+    background:
+      radial-gradient(circle at 28% 18%, rgb(255 255 255 / 0.86), transparent 48%),
+      linear-gradient(135deg, rgb(0 122 255 / 0.18), rgb(255 255 255 / 0.42) 54%, rgb(48 209 88 / 0.1));
+    box-shadow:
+      0 14px 30px rgb(0 122 255 / 0.14),
+      inset 0 1px 0 rgb(255 255 255 / 0.72),
+      inset 0 -1px 0 rgb(255 255 255 / 0.28);
+    -webkit-backdrop-filter: blur(18px) saturate(1.55);
+    backdrop-filter: blur(18px) saturate(1.55);
+    transform: translate3d(0, 0, 0) scale(1);
+    transition:
+      transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+      width 520ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 240ms ease-out;
+    will-change: transform;
+  }
+
+  html[data-theme='dark'] .ios-mobile-tab-indicator {
+    background:
+      radial-gradient(circle at 28% 18%, rgb(255 255 255 / 0.2), transparent 50%),
+      linear-gradient(135deg, rgb(0 122 255 / 0.22), rgb(39 39 42 / 0.54) 58%, rgb(48 209 88 / 0.08));
+    box-shadow:
+      0 14px 30px rgb(0 122 255 / 0.18),
+      inset 0 1px 0 rgb(255 255 255 / 0.16),
+      inset 0 -1px 0 rgb(255 255 255 / 0.06);
+  }
+
+  .ios-mobile-tabbar[data-active-tab='transaksi'] .ios-mobile-tab-indicator {
+    transform: translate3d(100%, 0, 0) scale(1);
+  }
+
+  .ios-mobile-tabbar[data-active-tab='produk'] .ios-mobile-tab-indicator {
+    transform: translate3d(200%, 0, 0) scale(1);
+  }
+
+  .ios-mobile-tabbar[data-active-tab='laporan'] .ios-mobile-tab-indicator {
+    transform: translate3d(300%, 0, 0) scale(1);
+  }
+
+  .ios-mobile-tabbar[data-active-tab='pengaturan'] .ios-mobile-tab-indicator {
+    transform: translate3d(400%, 0, 0) scale(1);
+  }
+
   html,
   body,
   #root {
@@ -20,11 +139,14 @@
     margin: 0;
     min-height: 100dvh;
     font-family: var(--font-sans);
-    color: rgb(244 244 245); /* zinc-100 */
-    background:
-      radial-gradient(1200px 800px at 50% -10%, rgb(0 122 255 / 0.08), transparent 60%),
-      linear-gradient(180deg, #09090b 0%, #000 100%); /* zinc-950 -> black */
+    color: var(--app-foreground);
+    background-color: var(--app-background);
+    background-image: var(--app-background-image);
+    background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
+    transition:
+      color 180ms ease,
+      background-color 180ms ease;
   }
 
   /* Tabular figures for money/amounts wherever `tabular-nums` is applied. */
@@ -34,14 +156,10 @@
 
   /* Dark UA-rendered controls (scrollbars, form internals) — RULES.md bans
      light native scrollbars on the dark glass theme. */
-  html {
-    color-scheme: dark;
-  }
-
   /* Styled scrollbars matching the glass theme (Firefox properties). */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgb(255 255 255 / 0.2) transparent;
+    scrollbar-color: var(--app-muted-foreground) transparent;
   }
 
   /* WebKit/Blink fallback for the same look. */
@@ -51,18 +169,74 @@
   }
   *::-webkit-scrollbar-thumb {
     border-radius: 9999px;
-    background-color: rgb(255 255 255 / 0.2);
+    background-color: var(--app-muted-foreground);
   }
   *::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(255 255 255 / 0.3);
+    background-color: var(--app-foreground-subtle);
   }
   *::-webkit-scrollbar-track {
     background-color: transparent;
   }
 }
 
-/* Bottom sheet + overlay enter/exit (Radix data-state driven) */
-@keyframes sheet-overlay-in {
+/* Reusable iOS-style motion primitives. Keep these animations limited to
+   transform and opacity so they stay on the compositor thread. */
+@keyframes ios-page-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.625rem, 0) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes ios-content-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.875rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ios-nav-pill-spring {
+  0% {
+    opacity: 0.72;
+    transform: scale(0.86);
+  }
+  62% {
+    opacity: 1;
+    transform: scale(1.045);
+  }
+  82% {
+    transform: scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ios-nav-icon-spring {
+  0% {
+    transform: translate3d(0, 0.1875rem, 0) scale(0.82);
+  }
+  58% {
+    transform: translate3d(0, -0.125rem, 0) scale(1.1);
+  }
+  80% {
+    transform: translate3d(0, 0.0625rem, 0) scale(0.97);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes ios-sheet-overlay-in {
   from {
     opacity: 0;
   }
@@ -70,47 +244,151 @@
     opacity: 1;
   }
 }
-@keyframes sheet-content-in {
+
+@keyframes ios-sheet-overlay-out {
   from {
-    transform: translateY(100%);
+    opacity: 1;
   }
   to {
-    transform: translateY(0);
+    opacity: 0;
   }
+}
+
+@keyframes ios-sheet-content-in {
+  0% {
+    opacity: 0.9;
+    transform: translate3d(0, 100%, 0);
+  }
+  72% {
+    opacity: 1;
+    transform: translate3d(0, -0.5%, 0);
+  }
+  88% {
+    transform: translate3d(0, 0.15%, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ios-sheet-content-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0.96;
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
+.ios-page-enter {
+  animation: ios-page-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ios-content-rise {
+  animation: ios-content-rise 440ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ios-pressable {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease-out,
+    color 180ms ease-out,
+    background-color 180ms ease-out,
+    border-color 180ms ease-out;
+}
+
+.ios-pressable:active:not(:disabled) {
+  opacity: 0.92;
+  transform: scale(0.975);
+  transition-duration: 70ms;
+}
+
+.ios-nav-pill-active,
+.ios-nav-pill[data-active='true'],
+.ios-nav-pill[aria-current='page'] {
+  animation: ios-nav-pill-spring 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center;
+}
+
+.ios-nav-icon-active,
+.ios-nav-item[data-active='true'] .ios-nav-icon,
+.ios-nav-item[aria-current='page'] .ios-nav-icon {
+  animation: ios-nav-icon-spring 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center;
 }
 
 .sheet-overlay[data-state='open'] {
-  animation: sheet-overlay-in 200ms ease-out;
+  animation: ios-sheet-overlay-in 220ms ease-out both;
 }
+
+.sheet-overlay[data-state='closed'] {
+  animation: ios-sheet-overlay-out 180ms ease-in both;
+}
+
 .sheet-content[data-state='open'] {
-  animation: sheet-content-in 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: ios-sheet-content-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .sheet-overlay[data-state='open'],
-  .sheet-content[data-state='open'] {
-    animation: none;
-  }
+.sheet-content[data-state='closed'] {
+  animation: ios-sheet-content-out 260ms cubic-bezier(0.4, 0, 1, 1) both;
 }
 
-/* Toast enter (GlassToastViewport) */
-@keyframes toast-in {
-  from {
+/* Toast spring (GlassToastViewport). */
+@keyframes ios-toast-spring {
+  0% {
     opacity: 0;
-    transform: translateY(0.75rem) scale(0.97);
+    transform: translate3d(0, 1rem, 0) scale(0.94);
   }
-  to {
+  64% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, -0.125rem, 0) scale(1.025);
+  }
+  82% {
+    transform: translate3d(0, 0.0625rem, 0) scale(0.992);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
 .toast-item {
-  animation: toast-in 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  animation: ios-toast-spring 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center bottom;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ios-page-enter,
+  .ios-content-rise,
+  .ios-nav-pill-active,
+  .ios-nav-pill[data-active='true'],
+  .ios-nav-pill[aria-current='page'],
+  .ios-nav-icon-active,
+  .ios-nav-item[data-active='true'] .ios-nav-icon,
+  .ios-nav-item[aria-current='page'] .ios-nav-icon,
+  .sheet-overlay[data-state='open'],
+  .sheet-overlay[data-state='closed'],
+  .sheet-content[data-state='open'],
+  .sheet-content[data-state='closed'],
   .toast-item {
-    animation: none;
+    animation: none !important;
+  }
+
+  .ios-pressable {
+    transition: none !important;
+  }
+
+  .ios-pressable:active {
+    opacity: 1;
+    transform: none;
+  }
+
+  .animate-pulse {
+    animation: none !important;
   }
 }

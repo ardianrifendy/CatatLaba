@@ -45,6 +45,14 @@ export const commonText = {
   // Beranda (home) page.
   beranda: {
     totalBalanceLabel: 'Saldo total',
+    monthlyNetLabel: 'Arus bersih bulan ini',
+    monthlyIncomeLabel: 'Pemasukan bulan ini',
+    monthlyExpenseLabel: 'Pengeluaran bulan ini',
+    budgetHighlightsLabel: 'Anggaran bulan ini',
+    budgetSpentLabel: 'terpakai',
+    noBudgets: 'Belum ada anggaran bulan ini.',
+    noTransactions:
+      'Belum ada transaksi. Catat pemasukan atau pengeluaran pertama Anda dari tab Transaksi.',
     summaryComingSoon:
       'Ringkasan omzet, pengeluaran, dan profit bulanan hadir di fase berikutnya.',
     balanceLoadError: 'Saldo gagal dimuat.',
@@ -62,6 +70,48 @@ export const commonText = {
     recurring: 'Transaksi Berulang',
     accountSync: 'Akun & Sinkronisasi',
     exportImport: 'Ekspor & Impor',
+    sync: {
+      title: 'Sinkronisasi cloud',
+      offline: 'Supabase belum dikonfigurasi.',
+      signedOut: 'Masuk untuk menyimpan backup cloud.',
+      syncing: 'Sedang menyinkronkan data.',
+      ready: 'Cloud siap digunakan.',
+      signedInAs: 'Masuk sebagai',
+      signIn: 'Masuk',
+      signUp: 'Daftar',
+      signOut: 'Keluar',
+      syncNow: 'Sinkronkan',
+      email: 'Email',
+      password: 'Kata sandi',
+      emailConfirmation: 'Cek email untuk konfirmasi akun.',
+      syncFailed: 'Sinkronisasi gagal. Coba lagi.',
+      cloudActionFailed: 'Aksi cloud gagal.',
+      exportBackupFailed: 'Export backup gagal.',
+      exportedBackupSuccess: 'Backup JSON tersimpan di Download/CatatLaba.',
+      importBackupFailed: 'Import backup gagal.',
+      accountFallback: 'akun Anda',
+      importedBackupSuccess: (count: number) => `${count} data berhasil diimpor.`,
+      lastSyncedAt: 'Terakhir sinkron',
+      backupTitle: 'Backup lokal',
+      backupDescription: 'Export menyimpan semua data, termasuk data yang diarsipkan.',
+      exportJson: 'Export JSON',
+      importBackup: 'Impor backup',
+      backupInvalid: 'File backup tidak valid.',
+      backupTableInvalid: (table: string) => `Data ${table} pada backup tidak valid.`,
+      requestFailed: (status: number) => `Supabase request gagal (${status}).`,
+      requestTimeout: 'Koneksi ke cloud terlalu lama. Coba lagi.',
+    },
+  },
+
+  theme: {
+    title: 'Tema tampilan',
+    description: 'Gunakan tema perangkat atau pilih tampilan secara manual.',
+    selectorLabel: 'Pilih tema tampilan',
+    modes: {
+      system: 'Sistem',
+      light: 'Terang',
+      dark: 'Gelap',
+    },
   },
 
   // Stub feature screens awaiting their real implementation.

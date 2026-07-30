@@ -8,7 +8,13 @@ export const queryKeys = {
   wallets: ['wallets'],
   categories: ['categories'],
   channels: ['channels'],
+  products: ['products'],
+  productHistory: (id: string) => ['products', id, 'history'],
   transactions: ['transactions'],
+  budgets: ['budgets'],
+  reportsRoot: ['reports'],
+  reports: (from: string, to: string) => ['reports', from, to],
+  recurring: ['recurring'],
 } as const
 
 // Error thrown when a repository Result is unwrapped for React Query. Carries

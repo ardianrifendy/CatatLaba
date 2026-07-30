@@ -19,7 +19,7 @@ export function GlassField({
     <div>
       <label
         htmlFor={htmlFor}
-        className="mb-1.5 block text-xs font-light text-zinc-400"
+        className="mb-1.5 block text-xs font-semibold text-muted-foreground"
       >
         {label}
       </label>
@@ -32,7 +32,7 @@ export function GlassField({
         {error}
       </p>
       {hint !== undefined && !error ? (
-        <p className="mt-1.5 text-xs text-zinc-500">{hint}</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>
       ) : null}
     </div>
   )

@@ -152,7 +152,7 @@ export function CategoryFormSheet({
   return (
     <GlassBottomSheet open={open} onOpenChange={onOpenChange}>
       <GlassBottomSheetContent aria-describedby={undefined}>
-        <GlassBottomSheetTitle className="mb-4 text-base font-medium text-zinc-100">
+        <GlassBottomSheetTitle className="mb-4 text-base font-medium text-foreground font-semibold">
           {isEditing ? categoriesText.form.editTitle : categoriesText.form.createTitle}
         </GlassBottomSheetTitle>
 

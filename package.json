@@ -10,12 +10,20 @@
     "lint": "oxlint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "android:sync": "npm run build && cap sync android",
+    "android:test": "node scripts/android-gradle.mjs testDebugUnitTest",
+    "android:test:device": "node scripts/android-gradle.mjs :app:connectedDebugAndroidTest",
+    "android:build:debug": "npm run android:sync && node scripts/android-gradle.mjs assembleDebug",
+    "android:verify": "npm run android:sync && node scripts/android-gradle.mjs lintDebug testDebugUnitTest assembleDebug"
   },
   "dependencies": {
     "@capacitor-community/sqlite": "^8.1.0",
     "@capacitor/android": "^8.4.2",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.4.2",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/share": "^8.0.1",
     "@fontsource-variable/inter": "^5.3.0",
     "@radix-ui/react-dialog": "^1.1.23",
     "@tailwindcss/vite": "^4.3.3",

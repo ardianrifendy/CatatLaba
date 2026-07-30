@@ -43,9 +43,57 @@ describe('product repository', () => {
     expect(product.costPrice).toBe(0)
     expect(product.salePrice).toBe(50_000)
   })
+
+  it('lists stock movements and sale profit from active transaction items', async () => {
+    const wallet = unwrap(await repos.wallets.create({ name: 'Kas', type: 'cash' }))
+    const product = unwrap(await repos.products.create({ name: 'Kaos' }))
+    unwrap(
+      await repos.transactions.create({
+        type: 'expense',
+        amount: 20_000,
+        walletId: wallet.id,
+        occurredAt: '2026-07-25T10:00:00.000Z',
+        items: [{ productId: product.id, qty: 2, unitPrice: 10_000 }],
+      }),
+    )
+    unwrap(
+      await repos.transactions.create({
+        type: 'income',
+        amount: 30_000,
+        walletId: wallet.id,
+        occurredAt: '2026-07-26T10:00:00.000Z',
+        items: [{ productId: product.id, qty: 2, unitPrice: 15_000 }],
+      }),
+    )
+
+    const history = unwrap(await repos.products.listHistory(product.id))
+    expect(history).toHaveLength(2)
+    expect(history[0]).toMatchObject({ type: 'income', stockDelta: -2, unitCost: 10_000, profit: 10_000 })
+    expect(history[1]).toMatchObject({ type: 'expense', stockDelta: 2, unitCost: 0, profit: 0 })
+  })
 })
 
 describe('budget repository', () => {
+  it('accepts only active expense categories and positive YYYY-MM budgets', async () => {
+    const income = unwrap(await repos.categories.create({ name: 'Penjualan', type: 'income' }))
+    const invalidCategory = await repos.budgets.create({
+      categoryId: income.id,
+      month: '2026-07',
+      amount: 100_000,
+    })
+    expect(invalidCategory.ok).toBe(false)
+    if (!invalidCategory.ok) expect(invalidCategory.error.code).toBe('VALIDATION')
+
+    const expense = unwrap(await repos.categories.create({ name: 'Iklan', type: 'expense' }))
+    const invalidMonth = await repos.budgets.create({
+      categoryId: expense.id,
+      month: '2026-13',
+      amount: 100_000,
+    })
+    expect(invalidMonth.ok).toBe(false)
+    if (!invalidMonth.ok) expect(invalidMonth.error.code).toBe('VALIDATION')
+  })
+
   it('rejects a duplicate (category, month) with a CONFLICT', async () => {
     const category = unwrap(await repos.categories.create({ name: 'Iklan', type: 'expense' }))
     unwrap(await repos.budgets.create({ categoryId: category.id, month: '2026-07', amount: 100_000 }))
@@ -98,5 +146,33 @@ describe('recurring repository', () => {
     )
     expect(rule.isActive).toBe(true)
     expect(unwrap(await repos.recurring.list())).toHaveLength(1)
+  })
+
+  it('materializes due rules once and advances nextRunAt atomically', async () => {
+    const wallet = unwrap(await repos.wallets.create({ name: 'Kas', type: 'cash' }))
+    const rule = unwrap(
+      await repos.recurring.create({
+        name: 'Sewa Toko',
+        frequency: 'monthly',
+        day: 1,
+        nextRunAt: '2026-06-01T00:00:00.000Z',
+        isActive: true,
+        templateType: 'expense',
+        templateAmount: 500_000,
+        templateWalletId: wallet.id,
+        templateCategoryId: null,
+        templateChannelId: null,
+        templateNote: 'Otomatis',
+      }),
+    )
+
+    const generated = unwrap(await repos.recurring.generateDue('2026-08-15T00:00:00.000Z'))
+    expect(generated).toHaveLength(3)
+    expect(generated.every((row) => row.recurringRuleId === rule.id)).toBe(true)
+
+    const advanced = unwrap(await repos.recurring.getById(rule.id))
+    expect(advanced.nextRunAt).toBe('2026-09-01T00:00:00.000Z')
+    expect(unwrap(await repos.recurring.generateDue('2026-08-15T00:00:00.000Z'))).toHaveLength(0)
+    expect(unwrap(await repos.transactions.list({ type: 'expense' }))).toHaveLength(3)
   })
 })

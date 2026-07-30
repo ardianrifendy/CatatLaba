@@ -15,7 +15,8 @@ import { GlassEmptyState } from '@/components/ui/GlassEmptyState'
 import { GlassIconButton } from '@/components/ui/GlassIconButton'
 import { TransferSheet } from './TransferSheet'
 import { WalletFormSheet } from './WalletFormSheet'
-import { WalletTypeIcon, walletTypeLabel } from './wallet-types'
+import { walletTypeLabel } from './wallet-types'
+import { IosWalletIcon } from '@/components/ui/IosIcons'
 
 export function WalletsScreen({ onBack }: { onBack: () => void }) {
   const repos = useRepos()
@@ -24,8 +25,6 @@ export function WalletsScreen({ onBack }: { onBack: () => void }) {
     queryKey: queryKeys.wallets,
     queryFn: async () => unwrap(await repos.wallets.list()),
   })
-  // All transactions: wallet balances are derived (initial balance + Σ effects),
-  // and the delete guard needs to know which wallets transactions reference.
   const transactionsQuery = useQuery({
     queryKey: queryKeys.transactions,
     queryFn: async () => unwrap(await repos.transactions.list()),
@@ -50,16 +49,12 @@ export function WalletsScreen({ onBack }: { onBack: () => void }) {
     () => (wallets ?? []).filter((wallet) => wallet.isArchived),
     [wallets],
   )
-  // Total across ACTIVE wallets only (archived money is out of sight).
   const total = useMemo(() => {
     let sum = 0
     for (const wallet of activeWallets) sum += balances.get(wallet.id) ?? 0
     return sum
   }, [activeWallets, balances])
-  // Delete guard (domain/wallet-guards): wallets referenced by any non-deleted
-  // transaction — including optimistic temp rows in the cache — can only be
-  // archived, never deleted. Memoized once per cache update; the form sheet
-  // checks membership per wallet.
+
   const referencedIds = useMemo(
     () => referencedWalletIds(transactions ?? []),
     [transactions],
@@ -87,13 +82,13 @@ export function WalletsScreen({ onBack }: { onBack: () => void }) {
     <section className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <GlassIconButton aria-label={walletsText.backLabel} onClick={onBack}>
-          <ArrowLeft aria-hidden className="size-5" />
+          <ArrowLeft aria-hidden className="size-5 text-foreground" />
         </GlassIconButton>
-        <h2 className="flex-1 truncate text-xl font-semibold tracking-tight">
+        <h2 className="flex-1 truncate text-lg font-bold tracking-tight text-foreground">
           {walletsText.title}
         </h2>
         <GlassIconButton aria-label={walletsText.addLabel} onClick={openCreate}>
-          <Plus aria-hidden className="size-5" />
+          <Plus aria-hidden className="size-5 text-foreground" />
         </GlassIconButton>
       </div>
 
@@ -101,7 +96,7 @@ export function WalletsScreen({ onBack }: { onBack: () => void }) {
         <ScreenSkeleton />
       ) : isError ? (
         <GlassCard className="flex flex-col items-center gap-3 p-6 text-center">
-          <p className="text-sm font-light text-zinc-400">{walletsText.loadError}</p>
+          <p className="text-sm font-normal text-muted-foreground">{walletsText.loadError}</p>
           <GlassButton variant="ghost" onClick={handleRetry}>
             {walletsText.retry}
           </GlassButton>
@@ -109,7 +104,7 @@ export function WalletsScreen({ onBack }: { onBack: () => void }) {
       ) : (wallets ?? []).length === 0 ? (
         <GlassCard>
           <GlassEmptyState
-            icon={<WalletIcon aria-hidden className="size-6" />}
+            icon={<WalletIcon aria-hidden className="size-6 text-muted-foreground" />}
             title={walletsText.empty.title}
             description={walletsText.empty.description}
             action={
@@ -124,13 +119,13 @@ export function WalletsScreen({ onBack }: { onBack: () => void }) {
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-6">
           <div className="flex flex-col gap-4">
             <GlassCard className="p-5">
-              <p className="text-xs font-light text-zinc-400">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {walletsText.totalBalanceLabel}
               </p>
               <p
                 className={cn(
-                  'mt-1 text-3xl font-bold tabular-nums',
-                  total < 0 ? 'text-expense' : 'text-zinc-100',
+                  'mt-1 text-3xl font-extrabold tabular-nums tracking-tight',
+                  total < 0 ? 'text-expense' : 'text-foreground',
                 )}
               >
                 {formatIDR(total)}
@@ -148,7 +143,7 @@ export function WalletsScreen({ onBack }: { onBack: () => void }) {
             ) : null}
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {activeWallets.length > 0 ? (
               <div className="flex flex-col gap-2">
                 {activeWallets.map((wallet) => (
@@ -164,7 +159,7 @@ export function WalletsScreen({ onBack }: { onBack: () => void }) {
 
             {archivedWallets.length > 0 ? (
               <div className="flex flex-col gap-2">
-                <h3 className="px-1 text-xs font-light tracking-wide text-zinc-500 uppercase">
+                <h3 className="px-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   {walletsText.archivedSection}
                 </h3>
                 {archivedWallets.map((wallet) => (
@@ -211,29 +206,28 @@ function WalletRow({ wallet, balance, archived = false, onClick }: WalletRowProp
       type="button"
       onClick={onClick}
       className={cn(
-        'flex min-h-14 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-left backdrop-blur-xl transition-colors hover:bg-white/10 active:bg-white/15',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
+        'ios-pressable flex min-h-14 w-full items-center gap-3 rounded-2xl border border-glass-border/70 bg-glass px-4 py-3 text-left backdrop-blur-md transition-all hover:bg-glass-hover hover:border-glass-border active:bg-glass-active',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
         archived && 'opacity-60',
       )}
     >
       <span
-        aria-hidden
-        className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-zinc-300"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent border border-accent/25 shadow-[0_0_10px_rgba(0,122,255,0.15)]"
       >
-        <WalletTypeIcon type={wallet.type} className="size-4" />
+        <IosWalletIcon size={20} className="shrink-0" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-zinc-100">
+        <span className="block truncate text-sm font-semibold text-foreground">
           {wallet.name}
         </span>
-        <span className="block text-xs font-light text-zinc-400">
+        <span className="block text-xs font-medium text-muted-foreground">
           {walletTypeLabel(wallet.type)}
         </span>
       </span>
       <span
         className={cn(
-          'shrink-0 text-sm font-medium tabular-nums',
-          balance < 0 ? 'text-expense' : 'text-zinc-100',
+          'shrink-0 text-sm font-bold tabular-nums',
+          balance < 0 ? 'text-expense' : 'text-foreground',
         )}
       >
         {formatIDR(balance)}
@@ -245,11 +239,11 @@ function WalletRow({ wallet, balance, archived = false, onClick }: WalletRowProp
 function ScreenSkeleton() {
   return (
     <div aria-hidden className="flex flex-col gap-4">
-      <div className="h-24 animate-pulse rounded-3xl border border-white/10 bg-white/5" />
+      <div className="h-24 animate-pulse rounded-3xl border border-glass-border bg-glass" />
       <div className="flex flex-col gap-2">
-        <div className="h-14 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
-        <div className="h-14 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
-        <div className="h-14 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+        <div className="h-14 animate-pulse rounded-2xl border border-glass-border bg-glass" />
+        <div className="h-14 animate-pulse rounded-2xl border border-glass-border bg-glass" />
+        <div className="h-14 animate-pulse rounded-2xl border border-glass-border bg-glass" />
       </div>
     </div>
   )

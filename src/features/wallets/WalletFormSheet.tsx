@@ -88,7 +88,7 @@ export function WalletFormSheet({
   return (
     <GlassBottomSheet open={open} onOpenChange={onOpenChange}>
       <GlassBottomSheetContent aria-describedby={undefined}>
-        <GlassBottomSheetTitle className="mb-4 text-base font-medium text-zinc-100">
+        <GlassBottomSheetTitle className="mb-4 text-base font-medium text-foreground font-semibold">
           {wallet === null ? walletsText.form.createTitle : walletsText.form.editTitle}
         </GlassBottomSheetTitle>
         <WalletFormBody

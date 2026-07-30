@@ -1,6 +1,6 @@
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { and, asc, desc, eq, isNull } from 'drizzle-orm'
 import type { DbContext } from '@/db/local'
-import { products, type Product } from '@/db/local/schema'
+import { products, type Product, transactionItems, transactions } from '@/db/local/schema'
 import { notFound } from '@/lib/errors'
 import { err, ok, type Result } from '@/lib/result'
 import { nowIso } from '@/lib/time'
@@ -18,6 +18,17 @@ export interface ProductCreate {
   isArchived?: boolean
 }
 export type ProductUpdate = Partial<ProductCreate>
+
+export interface ProductHistoryEntry {
+  id: string
+  type: 'income' | 'expense'
+  occurredAt: string
+  qty: number
+  unitPrice: number
+  unitCost: number
+  stockDelta: number
+  profit: number
+}
 
 export function createProductRepo({ db }: DbContext) {
   async function findActive(id: string): Promise<Product | undefined> {
@@ -53,6 +64,46 @@ export function createProductRepo({ db }: DbContext) {
       return guard<Product>(async () => {
         const row = await findActive(id)
         return row ? ok(row) : err(notFound('Produk tidak ditemukan.'))
+      })
+    },
+    listHistory(id: string): Promise<Result<ProductHistoryEntry[]>> {
+      return guard<ProductHistoryEntry[]>(async () => {
+        const product = await findActive(id)
+        if (!product) return err(notFound('Produk tidak ditemukan.'))
+        const rows = await db
+          .select({
+            id: transactionItems.id,
+            type: transactions.type,
+            occurredAt: transactions.occurredAt,
+            qty: transactionItems.qty,
+            unitPrice: transactionItems.unitPrice,
+            unitCost: transactionItems.unitCost,
+          })
+          .from(transactionItems)
+          .innerJoin(transactions, eq(transactionItems.transactionId, transactions.id))
+          .where(
+            and(
+              eq(transactionItems.productId, id),
+              isNull(transactionItems.deletedAt),
+              isNull(transactions.deletedAt),
+            ),
+          )
+          .orderBy(desc(transactions.occurredAt), desc(transactionItems.createdAt))
+
+        return ok(
+          rows
+            .filter((row): row is typeof row & { type: 'income' | 'expense' } => row.type !== 'transfer')
+            .map((row) => ({
+              id: row.id,
+              type: row.type,
+              occurredAt: row.occurredAt,
+              qty: row.qty,
+              unitPrice: row.unitPrice,
+              unitCost: row.unitCost,
+              stockDelta: row.type === 'expense' ? row.qty : -row.qty,
+              profit: row.type === 'income' ? (row.unitPrice - row.unitCost) * row.qty : 0,
+            })),
+        )
       })
     },
     update(id: string, patch: ProductUpdate): Promise<Result<Product>> {

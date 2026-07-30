@@ -5,12 +5,11 @@ type GlassInputProps = ComponentPropsWithoutRef<'input'> & {
   error?: boolean
 }
 
-// Native form controls are banned (RULES.md). This component must never render
-// as one of these types — if a caller passes one, we coerce back to text.
+// Keep non-text native controls out of the shared primitive. Date inputs stay
+// native so Android can provide the correct calendar picker and keyboard.
 const forbiddenTypes = new Set([
   'checkbox',
   'radio',
-  'date',
   'datetime-local',
   'month',
   'week',
@@ -31,8 +30,8 @@ export function GlassInput({
     <input
       type={safeType}
       className={cn(
-        'h-11 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-zinc-100 backdrop-blur-xl transition-colors',
-        'placeholder:text-zinc-500',
+        'h-11 w-full rounded-2xl border border-glass-border bg-glass px-4 text-sm text-foreground transition-colors',
+        'placeholder:text-muted-foreground',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
         'disabled:pointer-events-none disabled:opacity-50',
         error && 'border-expense',

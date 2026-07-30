@@ -74,7 +74,7 @@ export function GlassSelect({
         disabled={disabled}
         className={cn(
           // Mirror GlassInput so the trigger reads as a form field.
-          'flex h-11 w-full items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 text-left text-sm text-zinc-100 backdrop-blur-xl transition-colors',
+          'ios-pressable flex h-11 w-full items-center gap-2 rounded-2xl border border-glass-border bg-glass px-4 text-left text-sm text-foreground transition-colors hover:bg-glass-hover',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
           'disabled:pointer-events-none disabled:opacity-50',
           error && 'border-expense',
@@ -85,7 +85,7 @@ export function GlassSelect({
             {selected.icon !== undefined ? (
               <span
                 aria-hidden
-                className="flex size-5 shrink-0 items-center justify-center text-zinc-300"
+                className="flex size-5 shrink-0 items-center justify-center text-muted-foreground"
               >
                 {selected.icon}
               </span>
@@ -93,15 +93,21 @@ export function GlassSelect({
             <span className="min-w-0 flex-1 truncate">{selected.label}</span>
           </>
         ) : (
-          <span className="min-w-0 flex-1 truncate text-zinc-500">
+          <span className="min-w-0 flex-1 truncate text-muted-foreground">
             {placeholder}
           </span>
         )}
-        <ChevronDown aria-hidden className="size-4 shrink-0 text-zinc-500" />
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+            open && 'rotate-180',
+          )}
+        />
       </GlassBottomSheetTrigger>
 
       <GlassBottomSheetContent aria-describedby={undefined}>
-        <GlassBottomSheetTitle className="mb-4 text-base font-medium text-zinc-100">
+        <GlassBottomSheetTitle className="mb-4 text-base font-medium text-foreground">
           {title}
         </GlassBottomSheetTitle>
 
@@ -117,7 +123,7 @@ export function GlassSelect({
         ) : null}
 
         {filtered.length === 0 ? (
-          <p className="px-3 py-8 text-center text-sm text-zinc-500">
+          <p className="px-3 py-8 text-center text-sm text-muted-foreground">
             {controlsText.noResults}
           </p>
         ) : (
@@ -136,22 +142,22 @@ export function GlassSelect({
                   aria-selected={isSelected}
                   onClick={() => handleSelect(option.value)}
                   className={cn(
-                    'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-zinc-100 transition-colors hover:bg-white/5',
+                    'ios-pressable flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-glass-hover',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
-                    isSelected && 'bg-white/10',
+                    isSelected && 'bg-glass-strong',
                   )}
                 >
                   {option.icon !== undefined ? (
                     <span
                       aria-hidden
-                      className="flex size-5 shrink-0 items-center justify-center text-zinc-300"
+                      className="flex size-5 shrink-0 items-center justify-center text-muted-foreground"
                     >
                       {option.icon}
                     </span>
                   ) : null}
                   <span className="min-w-0 flex-1 truncate">{option.label}</span>
                   {option.hint !== undefined ? (
-                    <span className="shrink-0 text-xs text-zinc-400 tabular-nums">
+                    <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                       {option.hint}
                     </span>
                   ) : null}

@@ -32,16 +32,14 @@ export function GlassToastViewport() {
             event.stopPropagation()
             dismiss(item.id)
           }}
-          // Opaque-ish zinc base (like the bottom sheet surface) keeps the
-          // message readable over arbitrary content while staying glassy.
-          className="toast-item pointer-events-auto flex min-h-11 w-full max-w-sm items-center gap-3 rounded-2xl border border-white/10 bg-zinc-900/70 px-4 py-3 text-left shadow-2xl backdrop-blur-xl"
+          className="toast-item ios-pressable pointer-events-auto flex min-h-11 w-full max-w-sm items-center gap-3 rounded-2xl border border-glass-border bg-glass-strong px-4 py-3 text-left shadow-glass backdrop-blur-sm transition-colors hover:bg-glass-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
         >
           {item.kind === 'success' ? (
             <CircleCheck aria-hidden className="size-5 shrink-0 text-income" />
           ) : (
             <CircleAlert aria-hidden className="size-5 shrink-0 text-expense" />
           )}
-          <span className="text-sm text-zinc-100">{item.message}</span>
+          <span className="text-sm text-foreground">{item.message}</span>
         </button>
       ))}
     </div>

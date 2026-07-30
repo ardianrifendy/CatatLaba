@@ -44,11 +44,11 @@ export function GlassConfirmSheet({
       <GlassBottomSheetContent
         {...(description === undefined ? { 'aria-describedby': undefined } : {})}
       >
-        <GlassBottomSheetTitle className="text-base font-medium text-zinc-100">
+        <GlassBottomSheetTitle className="text-base font-semibold text-foreground">
           {title}
         </GlassBottomSheetTitle>
         {description !== undefined ? (
-          <GlassBottomSheetDescription className="mt-1.5 text-sm text-zinc-400">
+          <GlassBottomSheetDescription className="mt-1.5 text-sm text-muted-foreground">
             {description}
           </GlassBottomSheetDescription>
         ) : null}

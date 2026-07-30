@@ -53,6 +53,7 @@ export function useChannelMutations() {
 
   function reconcile(): void {
     void queryClient.invalidateQueries({ queryKey: queryKeys.channels })
+    void queryClient.invalidateQueries({ queryKey: queryKeys.reportsRoot })
   }
 
   const create = useMutation({

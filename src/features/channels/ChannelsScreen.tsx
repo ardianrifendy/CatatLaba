@@ -56,21 +56,21 @@ function ChannelRow({ channel, dimmed = false, onSelect }: ChannelRowProps) {
         type="button"
         onClick={onSelect}
         className={cn(
-          'flex min-h-14 w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left backdrop-blur-xl transition-colors hover:bg-white/10 active:bg-white/15',
+          'ios-pressable flex min-h-14 w-full items-center gap-3 rounded-2xl border border-glass-border bg-glass px-4 py-3 text-left backdrop-blur-md transition-colors hover:bg-glass-hover active:bg-glass-active',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
           dimmed && 'opacity-60',
         )}
       >
         <span
           aria-hidden="true"
-          className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-zinc-300"
+          className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-glass-border bg-glass text-zinc-300"
         >
           <Store className="size-4" />
         </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-100">
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
           {channel.name}
         </span>
-        <ChevronRight className="size-4 shrink-0 text-zinc-500" aria-hidden="true" />
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
       </button>
     </li>
   )
@@ -80,7 +80,7 @@ function ChannelListSkeleton() {
   return (
     <div aria-hidden="true" className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="h-14 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+        <div key={i} className="h-14 animate-pulse rounded-2xl border border-glass-border bg-glass" />
       ))}
     </div>
   )
@@ -260,7 +260,7 @@ export function ChannelsScreen({ onBack }: { onBack: () => void }) {
       {/* Create / edit sheet */}
       <GlassBottomSheet open={formOpen} onOpenChange={handleFormOpenChange}>
         <GlassBottomSheetContent aria-describedby={undefined}>
-          <GlassBottomSheetTitle className="text-base font-medium text-zinc-100">
+          <GlassBottomSheetTitle className="text-base font-medium text-foreground font-semibold">
             {editing !== null ? channelsText.form.editTitle : channelsText.form.createTitle}
           </GlassBottomSheetTitle>
           <form onSubmit={handleSubmit} noValidate className="mt-4 flex flex-col gap-4">

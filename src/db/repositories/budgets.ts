@@ -1,7 +1,7 @@
 import { and, asc, eq, isNull } from 'drizzle-orm'
 import type { DbContext } from '@/db/local'
-import { budgets, type Budget, type NewBudget } from '@/db/local/schema'
-import { notFound } from '@/lib/errors'
+import { budgets, type Budget, categories, type NewBudget } from '@/db/local/schema'
+import { notFound, validationError } from '@/lib/errors'
 import { err, ok, type Result } from '@/lib/result'
 import { nowIso } from '@/lib/time'
 import { guard, newRowMeta } from './shared'
@@ -11,6 +11,14 @@ export type BudgetCreate = Omit<NewBudget, 'id' | 'createdAt' | 'updatedAt' | 'd
 // AppError when a budget already exists for that pair. Only the amount is
 // mutable afterwards.
 export type BudgetUpdate = Pick<Partial<BudgetCreate>, 'amount'>
+
+function validAmount(amount: number): boolean {
+  return Number.isSafeInteger(amount) && amount > 0
+}
+
+function validMonth(month: string): boolean {
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(month)
+}
 
 export function createBudgetRepo({ db }: DbContext) {
   async function findActive(id: string): Promise<Budget | undefined> {
@@ -25,6 +33,26 @@ export function createBudgetRepo({ db }: DbContext) {
   return {
     create(input: BudgetCreate): Promise<Result<Budget>> {
       return guard<Budget>(async () => {
+        if (!validMonth(input.month)) {
+          return err(validationError('Bulan anggaran harus menggunakan format YYYY-MM.'))
+        }
+        if (!validAmount(input.amount)) {
+          return err(validationError('Nominal anggaran harus bilangan bulat lebih dari nol.'))
+        }
+        const [category] = await db
+          .select({ id: categories.id })
+          .from(categories)
+          .where(
+            and(
+              eq(categories.id, input.categoryId),
+              eq(categories.type, 'expense'),
+              isNull(categories.deletedAt),
+            ),
+          )
+          .limit(1)
+        if (!category) {
+          return err(validationError('Anggaran hanya dapat memakai kategori pengeluaran aktif.'))
+        }
         const meta = newRowMeta()
         await db.insert(budgets).values({ ...input, ...meta })
         const row = await findActive(meta.id)
@@ -50,6 +78,9 @@ export function createBudgetRepo({ db }: DbContext) {
     },
     update(id: string, patch: BudgetUpdate): Promise<Result<Budget>> {
       return guard<Budget>(async () => {
+        if (patch.amount !== undefined && !validAmount(patch.amount)) {
+          return err(validationError('Nominal anggaran harus bilangan bulat lebih dari nol.'))
+        }
         await db
           .update(budgets)
           .set({ ...patch, updatedAt: nowIso() })

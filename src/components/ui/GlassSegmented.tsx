@@ -1,20 +1,25 @@
 import { useRef } from 'react'
-import type { KeyboardEvent } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import { cn } from '@/lib/cn'
+
+export type GlassSegmentedOption<T extends string> = {
+  value: T
+  label: string
+  icon?: ReactNode
+}
 
 type GlassSegmentedProps<T extends string> = {
   value: T
   onChange: (v: T) => void
-  options: ReadonlyArray<{ value: T; label: string }>
+  options: ReadonlyArray<GlassSegmentedOption<T>>
   disabled?: boolean
   'aria-label'?: string
+  className?: string
 }
 
 /**
  * Segmented control (e.g. Pemasukan / Pengeluaran / Transfer). Radiogroup
  * semantics with roving tabindex + arrow-key selection; equal-width segments.
- * Container p-1 + h-9 segments = 44px total; each segment's before: pseudo
- * stretches its hit area over the full 44px band without changing visuals.
  */
 export function GlassSegmented<T extends string>({
   value,
@@ -22,12 +27,11 @@ export function GlassSegmented<T extends string>({
   options,
   disabled = false,
   'aria-label': ariaLabel,
+  className,
 }: GlassSegmentedProps<T>) {
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([])
 
-  const activeIndex = options.findIndex((option) => option.value === value)
-  // Roving tabindex: only the active segment is tabbable (first one when no
-  // segment matches `value`), per the WAI-ARIA radio-group pattern.
+  const activeIndex = Math.max(0, options.findIndex((option) => option.value === value))
   const tabbableIndex = activeIndex === -1 ? 0 : activeIndex
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -38,14 +42,12 @@ export function GlassSegmented<T extends string>({
     } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
       delta = -1
     } else {
-      // Space/Enter keep native button activation (onClick).
       return
     }
     event.preventDefault()
     const nextIndex = (tabbableIndex + delta + options.length) % options.length
     const nextOption = options[nextIndex]
     if (nextOption === undefined) return
-    // Arrow keys both select and move DOM focus (roving focus).
     if (nextOption.value !== value) onChange(nextOption.value)
     buttonRefs.current[nextIndex]?.focus()
   }
@@ -55,8 +57,24 @@ export function GlassSegmented<T extends string>({
       role="radiogroup"
       aria-label={ariaLabel}
       onKeyDown={handleKeyDown}
-      className="grid auto-cols-fr grid-flow-col gap-1 rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-xl"
+      className={cn(
+        'relative w-full grid auto-cols-fr grid-flow-col gap-1.5 rounded-2xl border border-glass-border/70 bg-glass/60 p-1.5 backdrop-blur-xl shadow-glass overflow-hidden',
+        className,
+      )}
     >
+      {/* Liquid Glass Sliding Active Indicator Pill */}
+      {options.length > 0 && activeIndex >= 0 ? (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute top-1.5 bottom-1.5 rounded-xl bg-accent shadow-md shadow-accent/35 backdrop-blur-md transition-all duration-350 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          style={{
+            width: `calc((100% - 0.75rem - ${(options.length - 1) * 0.375}rem) / ${options.length})`,
+            left: '0.375rem',
+            transform: `translate3d(calc(${activeIndex} * (100% + 0.375rem)), 0, 0)`,
+          }}
+        />
+      ) : null}
+
       {options.map((option, index) => {
         const active = option.value === value
         return (
@@ -70,21 +88,22 @@ export function GlassSegmented<T extends string>({
             aria-checked={active}
             disabled={disabled}
             tabIndex={index === tabbableIndex ? 0 : -1}
-            // Radio semantics: re-activating the checked segment is a no-op.
             onClick={() => {
               if (!active) onChange(option.value)
             }}
             className={cn(
-              'h-9 rounded-xl px-2 text-sm font-medium transition-colors',
-              // Invisible band extending the tap target to the container's
-              // full 44px height (h-9 segment + p-1 container padding).
-              "relative before:absolute before:-inset-y-1 before:inset-x-0 before:content-['']",
+              'ios-pressable relative z-10 flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-xs transition-colors duration-200',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
               'disabled:pointer-events-none disabled:opacity-50',
-              active ? 'bg-accent text-white' : 'text-zinc-300 hover:bg-white/5',
+              active
+                ? 'text-white font-bold'
+                : 'text-muted-foreground hover:bg-glass-hover hover:text-foreground font-semibold',
             )}
           >
-            {option.label}
+            {option.icon !== undefined ? (
+              <span className="shrink-0">{option.icon}</span>
+            ) : null}
+            <span>{option.label}</span>
           </button>
         )
       })}

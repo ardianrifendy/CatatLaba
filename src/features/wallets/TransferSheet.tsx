@@ -47,7 +47,7 @@ export function TransferSheet({ open, onOpenChange, activeWallets, balances }: T
   return (
     <GlassBottomSheet open={open} onOpenChange={onOpenChange}>
       <GlassBottomSheetContent aria-describedby={undefined}>
-        <GlassBottomSheetTitle className="mb-4 text-base font-medium text-zinc-100">
+        <GlassBottomSheetTitle className="mb-4 text-base font-medium text-foreground font-semibold">
           {walletsText.transfer.title}
         </GlassBottomSheetTitle>
         <TransferFormBody

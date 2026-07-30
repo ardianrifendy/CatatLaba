@@ -44,14 +44,14 @@ function CategoryRow({
       type="button"
       onClick={() => onSelect(category)}
       className={cn(
-        'flex min-h-11 w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-white/5 active:bg-white/10',
+        'ios-pressable flex min-h-11 w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-glass-hover active:bg-glass-hover',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
       )}
     >
       <span
         aria-hidden
         className={cn(
-          'flex shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5',
+          'flex shrink-0 items-center justify-center rounded-xl border border-glass-border bg-glass',
           child ? 'size-8 text-sm' : 'size-10 text-lg',
         )}
       >
@@ -61,8 +61,8 @@ function CategoryRow({
           <Tag className={cn('text-zinc-400', child ? 'size-3.5' : 'size-4')} />
         )}
       </span>
-      <span className="min-w-0 flex-1 truncate text-sm text-zinc-100">{category.name}</span>
-      <ChevronRight aria-hidden className="size-4 shrink-0 text-zinc-600" />
+      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">{category.name}</span>
+      <ChevronRight aria-hidden className="size-4 shrink-0 text-muted-foreground" />
     </button>
   )
 }
@@ -120,6 +120,7 @@ export function CategoriesScreen({ onBack }: { onBack: () => void }) {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.categories })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reportsRoot })
     },
   })
 
@@ -163,6 +164,7 @@ export function CategoriesScreen({ onBack }: { onBack: () => void }) {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.categories })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reportsRoot })
     },
   })
 
@@ -189,6 +191,7 @@ export function CategoriesScreen({ onBack }: { onBack: () => void }) {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.categories })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reportsRoot })
     },
   })
 
@@ -252,7 +255,7 @@ export function CategoriesScreen({ onBack }: { onBack: () => void }) {
       {categoriesQuery.isPending ? (
         <div aria-hidden className="flex flex-col gap-2">
           {[0, 1, 2, 3].map((index) => (
-            <div key={index} className="h-14 animate-pulse rounded-2xl bg-white/5" />
+            <div key={index} className="h-14 animate-pulse rounded-2xl bg-glass" />
           ))}
         </div>
       ) : categoriesQuery.isError ? (
@@ -287,7 +290,7 @@ export function CategoriesScreen({ onBack }: { onBack: () => void }) {
               <li key={node.category.id}>
                 <CategoryRow category={node.category} onSelect={openEdit} />
                 {node.children.length > 0 ? (
-                  <ul className="my-1 ml-6 flex flex-col gap-1 border-l border-white/10 pl-2">
+                  <ul className="my-1 ml-6 flex flex-col gap-1 border-l border-glass-border pl-2">
                     {node.children.map((childCategory) => (
                       <li key={childCategory.id}>
                         <CategoryRow category={childCategory} child onSelect={openEdit} />
