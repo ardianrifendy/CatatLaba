@@ -12,8 +12,8 @@ export interface SyncController {
   subscribe(listener: () => void): () => void
   syncNow(): Promise<SyncResult | null>
   schedule(): void
-  signIn(email: string, password: string): Promise<void>
-  signUp(email: string, password: string): Promise<boolean>
+  signIn(identifier: string, password: string): Promise<void>
+  signUp(email: string, password: string, fullName?: string, phone?: string): Promise<boolean>
   signOut(): Promise<void>
 }
 
@@ -67,13 +67,13 @@ export function createSyncController(ctx: DbContext): SyncController {
         void syncNow()
       }, debounceMs)
     },
-    async signIn(email, password) {
-      const session = await signInWithPassword(email, password)
+    async signIn(identifier, password) {
+      const session = await signInWithPassword(identifier, password)
       publish({ ...snapshot, status: 'idle', message: null, session })
       await syncNow()
     },
-    async signUp(email, password) {
-      const session = await signUpWithPassword(email, password)
+    async signUp(email, password, fullName, phone) {
+      const session = await signUpWithPassword(email, password, fullName, phone)
       if (!session) {
         publish({ ...snapshot, status: 'signed_out', message: commonText.settings.sync.emailConfirmation })
         return false

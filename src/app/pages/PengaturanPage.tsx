@@ -65,7 +65,10 @@ function SyncSubScreen({ onBack }: { onBack: () => void }) {
   const queryClient = useQueryClient()
   const text = commonText.settings.sync
 
-  const [email, setEmail] = useState('')
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -80,6 +83,18 @@ function SyncSubScreen({ onBack }: { onBack: () => void }) {
       setError(cause instanceof Error ? cause.message : text.cloudActionFailed)
     } finally {
       setPending(false)
+    }
+  }
+
+  function handleSubmit(event: React.FormEvent): void {
+    event.preventDefault()
+    if (mode === 'signin') {
+      void run(() => sync.signIn(identifier, password))
+    } else {
+      void run(async () => {
+        const signedIn = await sync.signUp(identifier, password, fullName, phone)
+        if (!signedIn) toast.success(text.emailConfirmation)
+      })
     }
   }
 
@@ -129,19 +144,91 @@ function SyncSubScreen({ onBack }: { onBack: () => void }) {
             </div>
           </div>
         ) : (
-          <form className="flex flex-col gap-4" onSubmit={(event) => { event.preventDefault(); void run(() => sync.signIn(email, password)) }}>
-            <GlassField label={text.email} htmlFor="sync-email">
-              <GlassInput id="sync-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required />
-            </GlassField>
-            <GlassField label={text.password} htmlFor="sync-password">
-              <GlassInput id="sync-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />
-            </GlassField>
-            {error ? <p className="text-xs font-normal text-expense">{error}</p> : null}
-            <div className="grid grid-cols-2 gap-3 mt-1">
-              <GlassButton type="submit" disabled={pending}>{text.signIn}</GlassButton>
-              <GlassButton variant="ghost" disabled={pending} onClick={() => void run(async () => { const signedIn = await sync.signUp(email, password); if (!signedIn) toast.success(text.emailConfirmation) })}>{text.signUp}</GlassButton>
-            </div>
-          </form>
+          <div className="flex flex-col gap-4">
+            {/* Mode Switcher */}
+            <GlassSegmented
+              value={mode}
+              onChange={setMode}
+              options={[
+                { value: 'signin', label: 'Masuk Akun' },
+                { value: 'signup', label: 'Daftar Baru' },
+              ]}
+              aria-label="Mode Akun"
+            />
+
+            <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+              {mode === 'signup' ? (
+                <>
+                  <GlassField label="Nama Lengkap" htmlFor="sync-fullname">
+                    <GlassInput
+                      id="sync-fullname"
+                      type="text"
+                      placeholder="Masukkan nama lengkap Anda"
+                      value={fullName}
+                      onChange={(event) => setFullName(event.target.value)}
+                      required
+                    />
+                  </GlassField>
+
+                  <GlassField label="Nomor Telepon (WhatsApp)" htmlFor="sync-phone">
+                    <GlassInput
+                      id="sync-phone"
+                      type="tel"
+                      placeholder="Contoh: 08123456789"
+                      value={phone}
+                      onChange={(event) => setPhone(event.target.value)}
+                      required
+                    />
+                  </GlassField>
+                </>
+              ) : null}
+
+              <GlassField
+                label={mode === 'signin' ? 'Email atau Nomor Telepon' : 'Alamat Email'}
+                htmlFor="sync-identifier"
+              >
+                <GlassInput
+                  id="sync-identifier"
+                  type={mode === 'signin' ? 'text' : 'email'}
+                  placeholder={mode === 'signin' ? 'contoh@email.com / 08123456789' : 'contoh@email.com'}
+                  value={identifier}
+                  onChange={(event) => setIdentifier(event.target.value)}
+                  autoComplete={mode === 'signin' ? 'username' : 'email'}
+                  required
+                />
+              </GlassField>
+
+              <GlassField label="Kata Sandi / Password" htmlFor="sync-password">
+                <GlassInput
+                  id="sync-password"
+                  type="password"
+                  placeholder="Minimal 6 karakter"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                  required
+                />
+              </GlassField>
+
+              {error ? <p className="text-xs font-normal text-expense">{error}</p> : null}
+
+              <div className="flex flex-col gap-2 mt-2">
+                <GlassButton type="submit" variant="primary" disabled={pending} className="w-full h-11">
+                  {mode === 'signin' ? 'Masuk' : 'Daftar Baru'}
+                </GlassButton>
+
+                <button
+                  type="button"
+                  onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors text-center py-1"
+                >
+                  {mode === 'signin'
+                    ? 'Belum punya akun? Klik untuk Daftar Baru'
+                    : 'Sudah punya akun? Klik untuk Masuk'}
+                </button>
+              </div>
+            </form>
+          </div>
         )}
       </GlassCard>
     </section>

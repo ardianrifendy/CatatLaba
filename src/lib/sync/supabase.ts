@@ -32,23 +32,43 @@ export function clearSession(): void {
   window.localStorage.removeItem(sessionKey)
 }
 
-export async function signInWithPassword(email: string, password: string): Promise<SyncSession> {
+export async function signInWithPassword(identifier: string, password: string): Promise<SyncSession> {
   const config = requireSupabaseConfig()
+  const isEmail = identifier.includes('@')
+  const body = isEmail ? { email: identifier, password } : { phone: identifier, password }
+  
   const payload = await requestJson<AuthPayload>(`${config.url}/auth/v1/token?grant_type=password`, {
     method: 'POST',
     headers: authHeaders(config.anonKey),
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(body),
   })
   const session = sessionFromPayload(payload)
   saveSession(session)
   return session
 }
 
-export async function signUpWithPassword(email: string, password: string): Promise<SyncSession | null> {
+export async function signUpWithPassword(
+  email: string,
+  password: string,
+  fullName?: string,
+  phone?: string,
+): Promise<SyncSession | null> {
   const config = requireSupabaseConfig()
   const payload = await requestJson<AuthPayload | { user: { id: string; email?: string | null } }>(
     `${config.url}/auth/v1/signup`,
-    { method: 'POST', headers: authHeaders(config.anonKey), body: JSON.stringify({ email, password }) },
+    {
+      method: 'POST',
+      headers: authHeaders(config.anonKey),
+      body: JSON.stringify({
+        email,
+        password,
+        phone: phone ? phone : undefined,
+        data: {
+          full_name: fullName,
+          phone_number: phone,
+        },
+      }),
+    },
   )
   if (!('access_token' in payload)) return null
   const session = sessionFromPayload(payload)
