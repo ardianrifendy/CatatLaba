@@ -268,65 +268,73 @@ export function PengaturanPage() {
         ? snapshot.session.email ?? 'Tersambung'
         : 'Belum masuk'
 
-  if (subScreen === 'wallets') return <WalletsScreen onBack={closeSub} />
-  if (subScreen === 'categories') return <CategoriesScreen onBack={closeSub} />
-  if (subScreen === 'channels') return <ChannelsScreen onBack={closeSub} />
-  if (subScreen === 'recurring') return <RecurringScreen onBack={closeSub} />
-  if (subScreen === 'sync') return <SyncSubScreen onBack={closeSub} />
-  if (subScreen === 'backup') return <BackupSubScreen onBack={closeSub} />
-  if (subScreen === 'theme') return <ThemeSubScreen onBack={closeSub} />
+  if (subScreen !== null) {
+    return (
+      <div key={subScreen} className="ios-subscreen-enter">
+        {subScreen === 'wallets' && <WalletsScreen onBack={closeSub} />}
+        {subScreen === 'categories' && <CategoriesScreen onBack={closeSub} />}
+        {subScreen === 'channels' && <ChannelsScreen onBack={closeSub} />}
+        {subScreen === 'recurring' && <RecurringScreen onBack={closeSub} />}
+        {subScreen === 'sync' && <SyncSubScreen onBack={closeSub} />}
+        {subScreen === 'backup' && <BackupSubScreen onBack={closeSub} />}
+        {subScreen === 'theme' && <ThemeSubScreen onBack={closeSub} />}
+      </div>
+    )
+  }
 
   return (
-    <section className="flex flex-col gap-6">
-      {/* Section 1: Kelola Data */}
-      <div className="flex flex-col gap-2">
-        <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Kelola Data
-        </span>
-        <GlassCard className="divide-y divide-glass-border/60 overflow-hidden">
-          <SettingsRow icon={IosWalletIcon} label={walletsText.title} onClick={() => openSub('wallets', walletsText.title)} />
-          <SettingsRow icon={IosPackageIcon} label={categoriesText.title} onClick={() => openSub('categories', categoriesText.title)} />
-          <SettingsRow icon={IosReceiptIcon} label={channelsText.title} onClick={() => openSub('channels', channelsText.title)} />
-          <SettingsRow icon={IosScaleIcon} label={commonText.settings.recurring} onClick={() => openSub('recurring', commonText.settings.recurring)} />
-        </GlassCard>
-      </div>
+    <div key="main-settings" className="ios-subscreen-enter">
+      <section className="flex flex-col gap-6">
+        {/* Section 1: Kelola Data */}
+        <div className="flex flex-col gap-2">
+          <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Kelola Data
+          </span>
+          <GlassCard className="divide-y divide-glass-border/60 overflow-hidden">
+            <SettingsRow icon={IosWalletIcon} label={walletsText.title} onClick={() => openSub('wallets', walletsText.title)} />
+            <SettingsRow icon={IosPackageIcon} label={categoriesText.title} onClick={() => openSub('categories', categoriesText.title)} />
+            <SettingsRow icon={IosReceiptIcon} label={channelsText.title} onClick={() => openSub('channels', channelsText.title)} />
+            <SettingsRow icon={IosScaleIcon} label={commonText.settings.recurring} onClick={() => openSub('recurring', commonText.settings.recurring)} />
+          </GlassCard>
+        </div>
 
-      {/* Section 2: Sinkronisasi & Backup */}
-      <div className="flex flex-col gap-2">
-        <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Awan & Cadangan
-        </span>
-        <GlassCard className="divide-y divide-glass-border/60 overflow-hidden">
-          <SettingsRow
-            icon={Cloud}
-            label="Sinkronisasi Cloud"
-            badge={cloudBadge}
-            onClick={() => openSub('sync', 'Sinkronisasi Cloud')}
-          />
-          <SettingsRow
-            icon={Download}
-            label="Backup & Impor Data"
-            badge="JSON File"
-            onClick={() => openSub('backup', 'Backup & Impor Data')}
-          />
-        </GlassCard>
-      </div>
+        {/* Section 2: Sinkronisasi & Backup */}
+        <div className="flex flex-col gap-2">
+          <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Awan & Cadangan
+          </span>
+          <GlassCard className="divide-y divide-glass-border/60 overflow-hidden">
+            <SettingsRow
+              icon={Cloud}
+              label="Sinkronisasi Cloud"
+              badge={cloudBadge}
+              onClick={() => openSub('sync', 'Sinkronisasi Cloud')}
+            />
+            <SettingsRow
+              icon={Download}
+              label="Backup & Impor Data"
+              badge="JSON File"
+              onClick={() => openSub('backup', 'Backup & Impor Data')}
+            />
+          </GlassCard>
+        </div>
 
-      {/* Section 3: Tampilan */}
-      <div className="flex flex-col gap-2">
-        <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Tampilan & Tema
-        </span>
-        <GlassCard className="divide-y divide-glass-border/60 overflow-hidden">
-          <SettingsRow
-            icon={Palette}
-            label="Tema Tampilan"
-            badge={themeLabel}
-            onClick={() => openSub('theme', 'Tema Tampilan')}
-          />
-        </GlassCard>
-      </div>
-    </section>
+        {/* Section 3: Tampilan */}
+        <div className="flex flex-col gap-2">
+          <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Tampilan & Tema
+          </span>
+          <GlassCard className="divide-y divide-glass-border/60 overflow-hidden">
+            <SettingsRow
+              icon={Palette}
+              label="Tema Tampilan"
+              badge={themeLabel}
+              onClick={() => openSub('theme', 'Tema Tampilan')}
+            />
+          </GlassCard>
+        </div>
+      </section>
+    </div>
   )
 }
 
