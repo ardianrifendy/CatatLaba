@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Cloud, Download, LogOut, Palette, RefreshCw } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Cloud, Database, Download, LogOut, Palette, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { GlassCard } from '@/components/ui/GlassCard'
@@ -301,21 +301,25 @@ function BackupSubScreen({ onBack }: { onBack: () => void }) {
         </h2>
       </div>
 
-      <GlassCard className="p-5 flex flex-col gap-4">
-        <div>
-          <p className="text-base font-semibold text-foreground">{text.backupTitle}</p>
-          <p className="text-xs font-normal text-muted-foreground mt-1 leading-relaxed">
-            {text.backupDescription}
-          </p>
+      <GlassCard className="p-5 flex flex-col gap-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent border border-accent/20">
+            <Database className="h-5 w-5 text-accent" aria-hidden="true" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-semibold text-foreground">{text.backupTitle}</p>
+            <p className="text-xs font-normal text-muted-foreground mt-0.5 leading-relaxed">
+              Export menyimpan semua data, termasuk data yang diarsipkan.
+            </p>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-3 mt-2">
-          <GlassButton variant="primary" className="w-full text-sm h-12" onClick={downloadBackup}>
+        <div className="flex flex-col gap-3">
+          <GlassButton variant="primary" className="w-full text-sm font-semibold h-12 rounded-xl" onClick={downloadBackup}>
             <Download className="h-4 w-4 mr-2" aria-hidden="true" /> Ekspor Backup JSON
           </GlassButton>
-          <div className="w-full">
-            <GlassFileInput accept="application/json,.json" label={text.importBackup} onChange={uploadBackup} />
-          </div>
+          
+          <GlassFileInput accept="application/json,.json" label={text.importBackup} onChange={uploadBackup} />
         </div>
       </GlassCard>
     </section>
