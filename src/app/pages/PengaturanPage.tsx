@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Cloud, Database, Download, Eye, EyeOff, LogOut, Palette, RefreshCw, Shield, Globe, Check } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Cloud, Database, Download, Eye, EyeOff, LogOut, Palette, RefreshCw, Shield, Globe, Check, Info } from 'lucide-react'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { GlassCard } from '@/components/ui/GlassCard'
@@ -33,7 +33,7 @@ import { exportJsonFile } from '@/lib/sync/file-export'
 import { queryKeys } from '@/lib/query'
 import { toast } from '@/stores/toast'
 
-type SubScreen = null | 'wallets' | 'categories' | 'channels' | 'recurring' | 'sync' | 'backup' | 'theme' | 'security' | 'language'
+type SubScreen = null | 'wallets' | 'categories' | 'channels' | 'recurring' | 'sync' | 'backup' | 'theme' | 'security' | 'language' | 'about'
 
 interface SettingsRowProps {
   icon: React.ComponentType<{ size?: number; className?: string }>
@@ -473,6 +473,54 @@ function LanguageSubScreen({ onBack }: { onBack: () => void }) {
   )
 }
 
+/* Subscreen: Tentang Aplikasi */
+function AboutSubScreen({ onBack }: { onBack: () => void }) {
+  return (
+    <section className="flex flex-col gap-5">
+      <div className="flex items-center gap-3">
+        <GlassIconButton aria-label="Kembali" onClick={onBack}>
+          <ArrowLeft aria-hidden className="size-5 text-foreground" />
+        </GlassIconButton>
+        <h2 className="flex-1 truncate text-lg font-bold tracking-tight text-foreground">
+          Tentang Aplikasi
+        </h2>
+      </div>
+
+      <GlassCard className="p-6 flex flex-col items-center text-center gap-4">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20 text-accent border border-accent/30 shadow-lg shadow-accent/20">
+          <Cloud className="h-9 w-9 text-accent" />
+        </div>
+
+        <div>
+          <h3 className="text-xl font-extrabold text-foreground">CatatLaba</h3>
+          <p className="text-xs font-semibold text-accent mt-0.5">Versi 1.0.0 (Build 2026)</p>
+        </div>
+
+        <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
+          Aplikasi pencatatan keuangan UMKM dan keuangan pribadi yang cepat, fleksibel, serta mengutamakan privasi dengan sistem <strong className="text-foreground">Offline-First (Local Database)</strong> dan sinkronisasi awan terenkripsi.
+        </p>
+
+        <div className="w-full border-t border-glass-border/60 my-1" />
+
+        <div className="grid grid-cols-2 gap-2 w-full text-left">
+          <div className="p-3 rounded-xl bg-glass/40 border border-glass-border">
+            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Penyimpanan</p>
+            <p className="text-xs font-semibold text-foreground mt-0.5">Local SQLite + Sync</p>
+          </div>
+          <div className="p-3 rounded-xl bg-glass/40 border border-glass-border">
+            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Proteksi Auth</p>
+            <p className="text-xs font-semibold text-foreground mt-0.5">Turnstile CAPTCHA</p>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-muted-foreground mt-2">
+          © 2026 CatatLaba Team. All rights reserved.
+        </p>
+      </GlassCard>
+    </section>
+  )
+}
+
 export function PengaturanPage() {
   const [subScreen, setSubScreenState] = useState<SubScreen>(null)
   const setSubScreenTitle = useNavStore((s) => s.setSubScreenTitle)
@@ -528,6 +576,7 @@ export function PengaturanPage() {
         {subScreen === 'theme' && <ThemeSubScreen onBack={closeSub} />}
         {subScreen === 'security' && <SecuritySubScreen onBack={closeSub} />}
         {subScreen === 'language' && <LanguageSubScreen onBack={closeSub} />}
+        {subScreen === 'about' && <AboutSubScreen onBack={closeSub} />}
       </div>
     )
   }
@@ -601,6 +650,21 @@ export function PengaturanPage() {
               label="Tema Tampilan"
               badge={themeLabel}
               onClick={() => openSub('theme', 'Tema Tampilan')}
+            />
+          </GlassCard>
+        </div>
+
+        {/* Section 5: Tentang Aplikasi */}
+        <div className="flex flex-col gap-2">
+          <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Lainnya & Informasi
+          </span>
+          <GlassCard className="divide-y divide-glass-border/60 overflow-hidden">
+            <SettingsRow
+              icon={Info}
+              label="Tentang Aplikasi"
+              badge="v1.0.0"
+              onClick={() => openSub('about', 'Tentang Aplikasi')}
             />
           </GlassCard>
         </div>
