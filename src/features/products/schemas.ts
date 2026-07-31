@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { productsText } from '@/lib/ui-text/products'
+import { productsText } from '@/lib/ui-text'
 
 const nullableNonNegativeInteger = z
   .number()

@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Cloud, Database, Download, LogOut, Palette, RefreshCw } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Cloud, Database, Download, Eye, EyeOff, LogOut, Palette, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { GlassCard } from '@/components/ui/GlassCard'
@@ -9,6 +9,7 @@ import { GlassIconButton } from '@/components/ui/GlassIconButton'
 import { GlassInput } from '@/components/ui/GlassInput'
 import { GlassSegmented } from '@/components/ui/GlassSegmented'
 import { ThemeSelector } from '@/components/ThemeSelector'
+import { CloudflareTurnstile } from '@/components/security/CloudflareTurnstile'
 import { CategoriesScreen } from '@/features/categories/CategoriesScreen'
 import { ChannelsScreen } from '@/features/channels/ChannelsScreen'
 import { WalletsScreen } from '@/features/wallets/WalletsScreen'
@@ -71,6 +72,10 @@ function SyncSubScreen({ onBack }: { onBack: () => void }) {
   const [phone, setPhone] = useState('')
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -92,8 +97,21 @@ function SyncSubScreen({ onBack }: { onBack: () => void }) {
     if (mode === 'signin') {
       void run(() => sync.signIn(identifier, password))
     } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(identifier.trim())) {
+        setError('Format alamat email tidak valid (contoh: nama@email.com).')
+        return
+      }
+      if (password.length < 8) {
+        setError('Kata sandi wajib minimal 8 karakter.')
+        return
+      }
+      if (password !== confirmPassword) {
+        setError('Konfirmasi kata sandi tidak cocok. Pastikan mengisi kata sandi yang sama.')
+        return
+      }
       void run(async () => {
-        const signedIn = await sync.signUp(identifier, password, fullName, phone)
+        const signedIn = await sync.signUp(identifier, password, fullName, phone, captchaToken ?? undefined)
         if (!signedIn) toast.success(text.emailConfirmation)
       })
     }
@@ -224,18 +242,62 @@ function SyncSubScreen({ onBack }: { onBack: () => void }) {
               </GlassField>
 
               <GlassField label="Kata Sandi / Password" htmlFor="sync-password">
-                <GlassInput
-                  id="sync-password"
-                  type="password"
-                  placeholder="Minimal 6 karakter"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                  required
-                />
+                <div className="relative flex items-center">
+                  <GlassInput
+                    id="sync-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder={mode === 'signup' ? 'Minimal 8 karakter' : 'Masukkan kata sandi'}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors p-1"
+                    aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </GlassField>
 
+              {mode === 'signup' ? (
+                <GlassField label="Konfirmasi Kata Sandi" htmlFor="sync-confirm-password">
+                  <div className="relative flex items-center">
+                    <GlassInput
+                      id="sync-confirm-password"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Ketik ulang kata sandi Anda"
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      autoComplete="new-password"
+                      required
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors p-1"
+                      aria-label={showConfirmPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </GlassField>
+              ) : null}
+
               {error ? <p className="text-xs font-normal text-expense">{error}</p> : null}
+
+              {mode === 'signup' ? (
+                <CloudflareTurnstile
+                  onVerify={setCaptchaToken}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => setCaptchaToken(null)}
+                />
+              ) : null}
 
               <div className="flex flex-col gap-2 mt-2">
                 <GlassButton type="submit" variant="primary" disabled={pending} className="w-full h-11">

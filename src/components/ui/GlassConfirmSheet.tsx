@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react'
-import { controlsText } from '@/lib/ui-text/controls'
+import { controlsText } from '@/lib/ui-text'
 import { GlassButton } from '@/components/ui/GlassButton'
 import {
   GlassBottomSheet,

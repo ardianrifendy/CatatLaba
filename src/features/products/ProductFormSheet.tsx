@@ -1,7 +1,8 @@
 import { Archive, ArchiveRestore, Trash2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import type { Product } from '@/db/local/schema'
-import { productsText } from '@/lib/ui-text/products'
+import { productsText } from '@/lib/ui-text'
+import { useLanguageStore } from '@/stores/language'
 import { GlassAmountInput } from '@/components/ui/GlassAmountInput'
 import { GlassBottomSheet, GlassBottomSheetContent, GlassBottomSheetTitle } from '@/components/ui/GlassBottomSheet'
 import { GlassButton } from '@/components/ui/GlassButton'
@@ -99,7 +100,7 @@ function ProductFormBody({ product, pending, onSave, onArchive, onDelete }: Body
       </GlassField>
 
       <div className="grid grid-cols-2 gap-3">
-        <GlassField label="Stok Produk Saat Ini" htmlFor="product-stock" error={errors.stockQty ?? null}>
+        <GlassField label={useLanguageStore.getState().lang === 'en' ? 'Current Product Stock' : 'Stok Produk Saat Ini'} htmlFor="product-stock" error={errors.stockQty ?? null}>
           <GlassInput id="product-stock" type="number" min={0} value={stockQty.toString()} onChange={(event) => { setStockQty(Math.max(0, parseInt(event.target.value || '0', 10))); clear('stockQty') }} placeholder="0" disabled={pending} error={errors.stockQty !== undefined} />
         </GlassField>
 

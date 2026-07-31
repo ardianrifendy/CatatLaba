@@ -1,8 +1,11 @@
+import { App } from '@capacitor/app'
+import { Browser } from '@capacitor/browser'
+import { Capacitor } from '@capacitor/core'
 import type { DbContext } from '@/db/local'
 import { hasSupabaseConfig } from '@/lib/env'
 import { commonText } from '@/lib/ui-text'
 import { synchronize, type SyncResult } from './engine'
-import { clearSession, getGoogleOAuthUrl, loadSession, parseOAuthCallbackFromUrl, signInWithPassword, signOut, signUpWithPassword } from './supabase'
+import { clearSession, getGoogleOAuthUrl, loadSession, parseOAuthCallbackFromUrl, signInWithPassword, signOut, signUpWithPassword, verifyOtp } from './supabase'
 import type { SyncSnapshot } from './types'
 
 const debounceMs = 1_500
@@ -13,8 +16,10 @@ export interface SyncController {
   syncNow(): Promise<SyncResult | null>
   schedule(): void
   signIn(identifier: string, password: string): Promise<void>
-  signUp(email: string, password: string, fullName?: string, phone?: string): Promise<boolean>
-  signInWithGoogle(): void
+  signUp(email: string, password: string, fullName?: string, phone?: string, captchaToken?: string): Promise<boolean>
+  verifyOtp(email: string, token: string): Promise<void>
+  signInWithGoogle(): Promise<void>
+  handleOAuthUrl(url: string): boolean
   signOut(): Promise<void>
 }
 
@@ -35,6 +40,25 @@ export function createSyncController(ctx: DbContext): SyncController {
   function publish(next: SyncSnapshot): void {
     snapshot = next
     listeners.forEach((listener) => listener())
+  }
+
+  function handleOAuthUrl(url: string): boolean {
+    const session = parseOAuthCallbackFromUrl(url)
+    if (session) {
+      publish({ ...snapshot, status: 'idle', message: null, session })
+      void syncNow()
+      return true
+    }
+    return false
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    void App.addListener('appUrlOpen', (data) => {
+      if (data.url && (data.url.includes('access_token=') || data.url.includes('com.catatlaba.app'))) {
+        void Browser.close().catch(() => {})
+        handleOAuthUrl(data.url)
+      }
+    })
   }
 
   async function syncNow(): Promise<SyncResult | null> {
@@ -76,8 +100,8 @@ export function createSyncController(ctx: DbContext): SyncController {
       publish({ ...snapshot, status: 'idle', message: null, session })
       await syncNow()
     },
-    async signUp(email, password, fullName, phone) {
-      const session = await signUpWithPassword(email, password, fullName, phone)
+    async signUp(email, password, fullName, phone, captchaToken) {
+      const session = await signUpWithPassword(email, password, fullName, phone, captchaToken)
       if (!session) {
         publish({ ...snapshot, status: 'signed_out', message: commonText.settings.sync.emailConfirmation })
         return false
@@ -86,10 +110,20 @@ export function createSyncController(ctx: DbContext): SyncController {
       await syncNow()
       return true
     },
-    signInWithGoogle() {
-      const url = getGoogleOAuthUrl()
-      window.location.href = url
+    async verifyOtp(email, token) {
+      const session = await verifyOtp(email, token)
+      publish({ ...snapshot, status: 'idle', message: null, session })
+      await syncNow()
     },
+    async signInWithGoogle() {
+      const url = getGoogleOAuthUrl()
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({ url })
+      } else {
+        window.location.href = url
+      }
+    },
+    handleOAuthUrl,
     async signOut() {
       const session = snapshot.session
       if (timer) clearTimeout(timer)
@@ -110,3 +144,4 @@ export function createSyncController(ctx: DbContext): SyncController {
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : commonText.settings.sync.syncFailed
 }
+

@@ -6,10 +6,13 @@ import type {
 } from '@/domain/reporting'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { formatIDR } from '@/lib/format'
-import { reportsText } from '@/lib/ui-text/reports'
+import { reportsText } from '@/lib/ui-text'
+import { useLanguageStore } from '@/stores/language'
 
 type ChartSectionProps = {
   title: string
+  icon?: React.ReactNode
+  iconBg?: string
   children: React.ReactNode
 }
 
@@ -29,10 +32,17 @@ const legendDotClasses = [
   'bg-muted-foreground shadow-muted-foreground/40',
 ] as const
 
-export function ChartSection({ title, children }: ChartSectionProps) {
+export function ChartSection({
+  title,
+  icon,
+  children,
+}: ChartSectionProps) {
   return (
     <GlassCard className="flex h-full flex-col gap-4 p-4 shadow-glass backdrop-blur-xl">
-      <h3 className="text-xs font-bold tracking-wider uppercase text-muted-foreground">{title}</h3>
+      <div className="flex items-center gap-2">
+        {icon ? <span className="text-accent shrink-0">{icon}</span> : null}
+        <h3 className="text-xs font-extrabold tracking-wider uppercase text-foreground">{title}</h3>
+      </div>
       <div className="flex-1">{children}</div>
     </GlassCard>
   )
@@ -51,11 +61,11 @@ export function ChannelProfitChart({ rows }: { rows: readonly ChannelProfit[] })
           <div key={row.channelId ?? 'none'} className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-foreground truncate max-w-[180px]">{row.label}</span>
-              <span className={`font-bold tabular-nums ${isPositive ? 'text-income' : 'text-expense'}`}>
+              <span className={`font-extrabold tabular-nums ${isPositive ? 'text-income' : 'text-expense'}`}>
                 {isPositive ? '+' : ''}{formatIDR(row.profit)}
               </span>
             </div>
-            <div className="h-2.5 w-full rounded-full bg-glass border border-glass-border overflow-hidden p-0.5 relative">
+            <div className="h-2.5 w-full rounded-full bg-glass-strong/60 border border-glass-border/70 overflow-hidden p-0.5 relative shadow-inner">
               <div
                 style={{ width: `${percentage}%` }}
                 className={`h-full rounded-full transition-all duration-500 ${
@@ -125,8 +135,10 @@ export function CategoryExpenseChart({ rows }: { rows: readonly CategoryExpense[
 
         {/* Donut Center Glass Badge */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Total</span>
-          <span className="text-xs font-extrabold tabular-nums text-foreground">{compactIDR(total)}</span>
+          <div className="flex flex-col items-center justify-center size-24 rounded-full bg-glass-strong/90 border border-glass-border/80 shadow-lg backdrop-blur-2xl">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total</span>
+            <span className="text-xs font-extrabold tabular-nums text-foreground">{compactIDR(total)}</span>
+          </div>
         </div>
       </div>
 
@@ -136,7 +148,7 @@ export function CategoryExpenseChart({ rows }: { rows: readonly CategoryExpense[
           return (
             <div
               key={row.categoryId ?? row.label}
-              className="flex items-center gap-2.5 text-xs rounded-xl border border-glass-border/40 bg-glass/40 px-3 py-2 backdrop-blur-sm"
+              className="flex items-center gap-2.5 text-xs rounded-2xl border border-glass-border/70 bg-glass/60 px-3.5 py-2.5 backdrop-blur-md shadow-glass transition-colors hover:bg-glass-hover"
             >
               <span
                 aria-hidden
@@ -144,7 +156,7 @@ export function CategoryExpenseChart({ rows }: { rows: readonly CategoryExpense[
               />
               <span className="min-w-0 flex-1 truncate font-semibold text-foreground">{row.label}</span>
               <span className="text-muted-foreground text-[11px] font-medium">{percent}%</span>
-              <span className="text-right font-bold tabular-nums text-foreground ml-1">
+              <span className="text-right font-extrabold tabular-nums text-foreground ml-1">
                 {formatIDR(row.expense)}
               </span>
             </div>
@@ -164,17 +176,18 @@ export function ProfitTrendChart({ rows }: { rows: readonly ProfitTrendPoint[] }
     return { ...row, x, y }
   })
 
-  // Build smooth curved path (Catmull-Rom / Spline interpolation)
+  // Build smooth curved path
   const strokePath = buildSmoothPath(points)
   const firstPoint = points[0]
   const lastPoint = points[points.length - 1]
-  const areaPath = firstPoint && lastPoint
+  const isAllZero = rows.every((r) => r.profit === 0)
+  const areaPath = !isAllZero && firstPoint && lastPoint
     ? `${strokePath} L ${lastPoint.x} 108 L ${firstPoint.x} 108 Z`
     : ''
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative overflow-hidden rounded-2xl border border-glass-border bg-glass/30 p-2 backdrop-blur-md">
+      <div className="relative overflow-hidden rounded-2xl border border-glass-border/70 bg-glass-strong/40 p-3 shadow-inner backdrop-blur-xl">
         <svg
           role="img"
           aria-label={reportsText.sections.profitTrend}
@@ -189,18 +202,18 @@ export function ProfitTrendChart({ rows }: { rows: readonly ProfitTrendPoint[] }
               <stop offset="100%" stopColor="#30d158" />
             </linearGradient>
             <linearGradient id="trend-fill-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#007aff" stopOpacity="0.28" />
+              <stop offset="0%" stopColor="#007aff" stopOpacity="0.25" />
               <stop offset="100%" stopColor="#007aff" stopOpacity="0.0" />
             </linearGradient>
             <filter id="glow-shadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#007aff" floodOpacity="0.35" />
+              <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#007aff" floodOpacity="0.4" />
             </filter>
           </defs>
 
           {/* Grid lines */}
-          <line x1="12" y1="16" x2="288" y2="16" className="stroke-glass-border/40" strokeDasharray="3 3" />
-          <line x1="12" y1="60" x2="288" y2="60" className="stroke-glass-border/60" />
-          <line x1="12" y1="104" x2="288" y2="104" className="stroke-glass-border/40" strokeDasharray="3 3" />
+          <line x1="12" y1="16" x2="288" y2="16" className="stroke-glass-border/30" strokeDasharray="3 3" />
+          <line x1="12" y1="60" x2="288" y2="60" className="stroke-glass-border/50" />
+          <line x1="12" y1="104" x2="288" y2="104" className="stroke-glass-border/30" strokeDasharray="3 3" />
 
           {/* Translucent Area Under Curve */}
           {areaPath !== '' ? <path d={areaPath} fill="url(#trend-fill-grad)" /> : null}
@@ -224,13 +237,13 @@ export function ProfitTrendChart({ rows }: { rows: readonly ProfitTrendPoint[] }
                 cx={point.x}
                 cy={point.y}
                 r="6"
-                className={point.profit >= 0 ? 'fill-income/30' : 'fill-expense/30'}
+                className={point.profit > 0 ? 'fill-income/30' : point.profit < 0 ? 'fill-expense/30' : 'fill-accent/20'}
               />
               <circle
                 cx={point.x}
                 cy={point.y}
                 r="3.5"
-                className={point.profit >= 0 ? 'fill-income stroke-white' : 'fill-expense stroke-white'}
+                className={point.profit > 0 ? 'fill-income stroke-white' : point.profit < 0 ? 'fill-expense stroke-white' : 'fill-accent stroke-white'}
                 strokeWidth="1.5"
                 vectorEffect="non-scaling-stroke"
               />
@@ -239,14 +252,14 @@ export function ProfitTrendChart({ rows }: { rows: readonly ProfitTrendPoint[] }
         </svg>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {labelPoints(points).map((point) => (
           <div
             key={point.key}
-            className="flex flex-col rounded-xl border border-glass-border/50 bg-glass/40 p-2 text-xs backdrop-blur-sm"
+            className="flex flex-col gap-0.5 rounded-2xl border border-glass-border/70 bg-glass/60 p-2.5 text-xs backdrop-blur-md shadow-glass"
           >
-            <p className="truncate text-[11px] font-medium text-muted-foreground">{formatTrendKey(point.key)}</p>
-            <p className={`truncate font-bold tabular-nums ${point.profit >= 0 ? 'text-income' : 'text-expense'}`}>
+            <p className="truncate text-[11px] font-semibold text-muted-foreground">{formatTrendKey(point.key, useLanguageStore.getState().lang)}</p>
+            <p className={`truncate font-extrabold tabular-nums text-sm ${point.profit > 0 ? 'text-income' : point.profit < 0 ? 'text-expense' : 'text-foreground'}`}>
               {compactIDR(point.profit)}
             </p>
           </div>
@@ -352,10 +365,10 @@ function labelPoints<T extends { key: string }>(points: readonly T[]): T[] {
   return [...indexes].map((index) => points[index]).filter((point): point is T => point !== undefined)
 }
 
-function formatTrendKey(key: string): string {
+function formatTrendKey(key: string, lang: string): string {
   const [year = '', month = '', day] = key.split('-')
   const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day ?? '1')))
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'id-ID', {
     day: day === undefined ? undefined : '2-digit',
     month: 'short',
     year: '2-digit',
@@ -391,3 +404,4 @@ function buildSmoothPath(points: readonly { x: number; y: number }[]): string {
   }
   return d
 }
+

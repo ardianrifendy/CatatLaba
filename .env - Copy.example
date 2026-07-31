@@ -1,5 +1,0 @@
-# CatatLaba environment (Vite exposes only VITE_-prefixed vars to the client).
-# Supabase powers cloud sync (Phase 7). The app works fully offline without these.
-# Use the Supabase anon (public) key only — never the service_role key (RULES.md).
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=

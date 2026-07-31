@@ -16,7 +16,7 @@ import { cn } from '@/lib/cn'
 import { formatIDR } from '@/lib/format'
 import { queryKeys, unwrap } from '@/lib/query'
 import { jakartaMonthPeriod } from '@/lib/transaction-filter'
-import { budgetsText } from '@/lib/ui-text/budgets'
+import { budgetsText } from '@/lib/ui-text'
 import { BudgetFormSheet } from './BudgetFormSheet'
 
 function currentJakartaMonth(): string {
@@ -131,41 +131,54 @@ export function BudgetsScreen() {
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <h2 className="min-w-0 flex-1 truncate text-xl font-semibold tracking-tight">
-          {budgetsText.title}
-        </h2>
-        <GlassIconButton
-          aria-label={budgetsText.addLabel}
+      {/* Top Action Header */}
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          ANGGARAN BULANAN
+        </span>
+        <GlassButton
+          variant="primary"
           onClick={openCreate}
           disabled={isPending}
+          className="px-3 text-xs"
         >
-          <Plus aria-hidden className="size-5" />
-        </GlassIconButton>
+          <Plus aria-hidden className="size-4" />
+          <span>Tambah Anggaran</span>
+        </GlassButton>
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Sleek Integrated Month Navigator */}
+      <GlassCard className="flex items-center justify-between p-1.5 backdrop-blur-xl">
         <GlassIconButton
           aria-label={budgetsText.previousMonth}
           onClick={() => setSelectedMonth((month) => shiftMonth(month, -1))}
+          className="size-8"
         >
-          <ChevronLeft aria-hidden className="size-5" />
+          <ChevronLeft aria-hidden className="size-4" />
         </GlassIconButton>
-        <GlassButton
-          variant="ghost"
-          onClick={() => setSelectedMonth(currentJakartaMonth())}
-          className="min-w-0 flex-1 capitalize"
-          title={budgetsText.currentMonth}
-        >
-          <span className="truncate">{monthLabel(selectedMonth)}</span>
-        </GlassButton>
+
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-foreground capitalize">
+            {monthLabel(selectedMonth)}
+          </span>
+          {selectedMonth !== currentJakartaMonth() ? (
+            <button
+              onClick={() => setSelectedMonth(currentJakartaMonth())}
+              className="rounded-full bg-accent/15 px-2.5 py-0.5 text-[10px] font-bold text-accent border border-accent/25 hover:bg-accent/25 transition-colors"
+            >
+              Bulan Ini
+            </button>
+          ) : null}
+        </div>
+
         <GlassIconButton
           aria-label={budgetsText.nextMonth}
           onClick={() => setSelectedMonth((month) => shiftMonth(month, 1))}
+          className="size-8"
         >
-          <ChevronRight aria-hidden className="size-5" />
+          <ChevronRight aria-hidden className="size-4" />
         </GlassIconButton>
-      </div>
+      </GlassCard>
 
       {isPending && !isError ? <BudgetSkeleton /> : null}
       {isError ? (
@@ -195,16 +208,41 @@ export function BudgetsScreen() {
 
       {!isPending && !isError && progressRows.length > 0 ? (
         <>
-          <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-3">
-            <SummaryCard label={budgetsText.summary.allocated} value={summary.allocated} />
-            <SummaryCard label={budgetsText.summary.spent} value={summary.spent} />
-            <SummaryCard
-              className="col-span-2 sm:col-span-1"
-              label={summary.remaining < 0 ? budgetsText.summary.over : budgetsText.summary.remaining}
-              value={Math.abs(summary.remaining)}
-              danger={summary.remaining < 0}
-            />
-          </div>
+          {/* iOS 26 Glassmorphic 3-Column Summary Widget */}
+          <GlassCard className="grid grid-cols-3 divide-x divide-glass-border/40 p-3.5 backdrop-blur-xl">
+            <div className="flex flex-col gap-0.5 px-1 text-center">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                {budgetsText.summary.allocated}
+              </span>
+              <span className="text-xs sm:text-sm font-extrabold text-foreground tabular-nums truncate">
+                {formatIDR(summary.allocated)}
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-0.5 px-1 text-center">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                {budgetsText.summary.spent}
+              </span>
+              <span className="text-xs sm:text-sm font-extrabold text-foreground tabular-nums truncate">
+                {formatIDR(summary.spent)}
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-0.5 px-1 text-center">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                {summary.remaining < 0 ? budgetsText.summary.over : budgetsText.summary.remaining}
+              </span>
+              <span
+                className={cn(
+                  'text-xs sm:text-sm font-extrabold tabular-nums truncate',
+                  summary.remaining < 0 ? 'text-expense' : 'text-accent',
+                )}
+              >
+                {formatIDR(Math.abs(summary.remaining))}
+              </span>
+            </div>
+          </GlassCard>
+
           <div className="grid gap-3">
             {progressRows.map(({ budget, progress }) => (
               <BudgetProgressCard
@@ -229,32 +267,6 @@ export function BudgetsScreen() {
   )
 }
 
-function SummaryCard({
-  label,
-  value,
-  danger = false,
-  className,
-}: {
-  label: string
-  value: number
-  danger?: boolean
-  className?: string
-}) {
-  return (
-    <GlassCard className={cn('flex h-full min-w-0 flex-col gap-1 p-3', className)}>
-      <p className="truncate text-xs font-normal text-zinc-500">{label}</p>
-      <p
-        className={cn(
-          'break-words text-right text-xs font-semibold tabular-nums sm:text-sm',
-          danger ? 'text-expense' : 'text-foreground font-semibold',
-        )}
-      >
-        {formatIDR(value)}
-      </p>
-    </GlassCard>
-  )
-}
-
 function BudgetProgressCard({
   category,
   progress,
@@ -265,37 +277,56 @@ function BudgetProgressCard({
   onEdit: () => void
 }) {
   const isOverBudget = progress.status === 'over-budget'
+  const isNearLimit = progress.percent >= 80 && !isOverBudget
 
   return (
-    <GlassCard className="flex h-full flex-col gap-3 p-4">
-      <div className="flex items-start gap-3">
+    <GlassCard className="flex flex-col gap-3.5 p-4 transition-all hover:border-glass-border">
+      <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-foreground font-semibold">
+          <h4 className="truncate text-sm font-bold text-foreground">
             {category?.name ?? budgetsText.form.categoryLabel}
-          </p>
-          <p className="text-xs font-normal text-zinc-500">
-            {formatIDR(progress.spent)} / {formatIDR(progress.budget)}
+          </h4>
+          <p className="text-xs font-medium text-muted-foreground tabular-nums">
+            {formatIDR(progress.spent)} <span className="text-muted-foreground/60">/</span> {formatIDR(progress.budget)}
           </p>
         </div>
-        <GlassIconButton aria-label={budgetsText.form.editTitle} onClick={onEdit}>
-          <Pencil aria-hidden className="size-4" />
+
+        <GlassIconButton
+          aria-label={budgetsText.form.editTitle}
+          onClick={onEdit}
+          className="size-8 text-muted-foreground hover:text-foreground"
+        >
+          <Pencil aria-hidden className="size-3.5" />
         </GlassIconButton>
       </div>
+
       <GlassProgress
         value={progress.percent}
         label={`${category?.name ?? budgetsText.title}: ${progress.percent}%`}
-        tone={isOverBudget ? 'warning' : 'default'}
+        tone={isOverBudget ? 'danger' : isNearLimit ? 'warning' : 'default'}
       />
-      <div className="grid grid-cols-2 gap-3 text-xs">
-        <p className="text-zinc-500">{progress.percent}% {budgetsText.progress.used}</p>
-        <p
+
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <span
           className={cn(
-            'text-right font-medium tabular-nums',
-            isOverBudget ? 'text-expense' : 'text-zinc-300',
+            'inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold transition-colors',
+            isOverBudget
+              ? 'bg-expense/15 text-expense border border-expense/25'
+              : isNearLimit
+                ? 'bg-amber-500/15 text-amber-500 border border-amber-500/25'
+                : 'bg-accent/10 text-accent border border-accent/20',
           )}
         >
-          {isOverBudget ? budgetsText.progress.over : budgetsText.progress.remaining}{' '}
-          {formatIDR(Math.abs(progress.remaining))}
+          {progress.percent}% terpakai
+        </span>
+
+        <p
+          className={cn(
+            'text-right text-xs font-semibold tabular-nums',
+            isOverBudget ? 'text-expense font-extrabold' : 'text-muted-foreground',
+          )}
+        >
+          {isOverBudget ? 'Terlampaui' : 'Sisa'} {formatIDR(Math.abs(progress.remaining))}
         </p>
       </div>
     </GlassCard>

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type GlobalActionType = 'create-transaction' | 'create-product' | null
+export type GlobalActionType = 'create-transaction' | 'create-product' | 'search-product' | null
 
 interface GlobalActionState {
   pendingAction: GlobalActionType

@@ -10,13 +10,15 @@ import type { Category, Channel, RecurringRule, Wallet } from '@/db/local/schema
 import { formatIDR } from '@/lib/format'
 import { queryKeys, unwrap } from '@/lib/query'
 import { commonText } from '@/lib/ui-text'
-import { recurringText } from '@/lib/ui-text/recurring'
+import { recurringText } from '@/lib/ui-text'
 import { RecurringFormSheet } from './RecurringFormSheet'
 import { useCreateRecurring, useDeleteRecurring, useSetRecurringActive, useUpdateRecurring } from './use-recurring-mutations'
 import type { RecurringFormValues } from './schemas'
 
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(new Date(iso))
+import { useLanguageStore } from '@/stores/language'
+
+function formatDate(iso: string, lang: string): string {
+  return new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(new Date(iso))
 }
 
 function scheduleLabel(rule: RecurringRule): string {
@@ -93,7 +95,8 @@ function RuleGroup({ title, rules, wallets, categories, channels, pending, onEdi
 }
 
 function RuleCard({ rule, wallet, category, channel, pending, onEdit, onToggle }: { rule: RecurringRule; wallet: Wallet | undefined; category: Category | undefined; channel: Channel | undefined; pending: boolean; onEdit: () => void; onToggle: () => void }) {
-  return <GlassCard className="flex h-full flex-col gap-3 p-4"><div className="flex items-start gap-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{rule.name}</p><p className="text-xs font-normal text-muted-foreground">{scheduleLabel(rule)} · {formatDate(rule.nextRunAt)}</p></div><GlassIconButton aria-label={recurringText.form.editTitle} onClick={onEdit} disabled={pending}><Pencil aria-hidden className="size-4 text-foreground" /></GlassIconButton></div><div className="grid grid-cols-2 gap-3 text-xs"><p className="truncate text-foreground-subtle">{wallet?.name ?? recurringText.form.walletLabel}</p><p className="truncate text-right text-foreground-subtle">{category?.name ?? recurringText.form.categoryLabel}</p><p className="truncate text-muted-foreground">{channel?.name ?? recurringText.form.optionalNone}</p><p className="text-right font-bold tabular-nums text-foreground">{formatIDR(rule.templateAmount)}</p></div><GlassButton variant="ghost" onClick={onToggle} disabled={pending}><ArchiveRestore aria-hidden className="size-4" />{rule.isActive ? recurringText.inactive : recurringText.active}</GlassButton></GlassCard>
+  const lang = useLanguageStore((s) => s.lang)
+  return <GlassCard className="flex h-full flex-col gap-3 p-4"><div className="flex items-start gap-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{rule.name}</p><p className="text-xs font-normal text-muted-foreground">{scheduleLabel(rule)} · {formatDate(rule.nextRunAt, lang)}</p></div><GlassIconButton aria-label={recurringText.form.editTitle} onClick={onEdit} disabled={pending}><Pencil aria-hidden className="size-4 text-foreground" /></GlassIconButton></div><div className="grid grid-cols-2 gap-3 text-xs"><p className="truncate text-foreground-subtle">{wallet?.name ?? recurringText.form.walletLabel}</p><p className="truncate text-right text-foreground-subtle">{category?.name ?? recurringText.form.categoryLabel}</p><p className="truncate text-muted-foreground">{channel?.name ?? recurringText.form.optionalNone}</p><p className="text-right font-bold tabular-nums text-foreground">{formatIDR(rule.templateAmount)}</p></div><GlassButton variant="ghost" onClick={onToggle} disabled={pending}><ArchiveRestore aria-hidden className="size-4" />{rule.isActive ? recurringText.inactive : recurringText.active}</GlassButton></GlassCard>
 }
 
 function RecurringSkeleton() { return <div aria-hidden className="flex flex-col gap-3"><div className="h-40 animate-pulse rounded-lg bg-glass" /><div className="h-40 animate-pulse rounded-lg bg-glass" /></div> }

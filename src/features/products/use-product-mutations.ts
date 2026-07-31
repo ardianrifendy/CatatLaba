@@ -5,7 +5,7 @@ import { newId } from '@/lib/id'
 import { queryKeys, RepoError, unwrap } from '@/lib/query'
 import { nowIso } from '@/lib/time'
 import { commonText } from '@/lib/ui-text'
-import { productsText } from '@/lib/ui-text/products'
+import { productsText } from '@/lib/ui-text'
 import { toast } from '@/stores/toast'
 import type { ProductFormValues } from './schemas'
 

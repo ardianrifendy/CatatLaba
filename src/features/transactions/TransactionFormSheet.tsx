@@ -11,7 +11,7 @@ import { GlassField } from '@/components/ui/GlassField'
 import { GlassInput } from '@/components/ui/GlassInput'
 import { GlassSegmented } from '@/components/ui/GlassSegmented'
 import { GlassSelect, type GlassSelectOption } from '@/components/ui/GlassSelect'
-import { transactionsText } from '@/lib/ui-text/transactions'
+import { transactionsText } from '@/lib/ui-text'
 import { formatIDR } from '@/lib/format'
 import {
   collectTransactionErrors,

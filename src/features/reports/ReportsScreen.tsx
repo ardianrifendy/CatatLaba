@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { BarChart3, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Award, BarChart3, ChevronLeft, ChevronRight, PieChart, Store } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useRepos } from '@/app/providers'
 import { GlassButton } from '@/components/ui/GlassButton'
@@ -9,28 +9,30 @@ import { GlassSegmented } from '@/components/ui/GlassSegmented'
 import { buildReport, type ReportPeriod, type ReportTransaction } from '@/domain/reporting'
 import { formatIDR } from '@/lib/format'
 import { queryKeys, unwrap } from '@/lib/query'
-import { reportsText } from '@/lib/ui-text/reports'
+import { reportsText } from '@/lib/ui-text'
 import {
   CategoryExpenseChart,
   ChannelProfitChart,
   ChartSection,
-  ProfitTrendChart,
   TopProducts,
 } from './ReportCharts'
 
+import { useLanguageStore } from '@/stores/language'
+
 type PeriodMode = 'month' | 'quarter' | 'year'
 
-const periodOptions: ReadonlyArray<{ value: PeriodMode; label: string }> = [
-  { value: 'month', label: reportsText.period.month },
-  { value: 'quarter', label: reportsText.period.quarter },
-  { value: 'year', label: reportsText.period.year },
-]
-
 export function ReportsScreen() {
+  const lang = useLanguageStore((s) => s.lang)
   const repos = useRepos()
   const [mode, setMode] = useState<PeriodMode>('month')
   const [cursor, setCursor] = useState(currentJakartaMonth)
-  const periodView = useMemo(() => makePeriod(cursor, mode), [cursor, mode])
+  const periodView = useMemo(() => makePeriod(cursor, mode, lang), [cursor, mode, lang])
+
+  const periodOptions: ReadonlyArray<{ value: PeriodMode; label: string }> = useMemo(() => [
+    { value: 'month', label: reportsText.period.month },
+    { value: 'quarter', label: reportsText.period.quarter },
+    { value: 'year', label: reportsText.period.year },
+  ], [lang])
 
   const reportQuery = useQuery({
     queryKey: queryKeys.reports(periodView.period.from, periodView.period.to),
@@ -142,23 +144,20 @@ export function ReportsScreen() {
 function ReportContent({ report }: { report: ReturnType<typeof buildReport> }) {
   return (
     <div className="flex flex-col gap-4">
-      <GlassCard className="grid grid-cols-3 gap-2 p-3.5 text-center">
+      <GlassCard className="grid grid-cols-3 gap-2 p-3.5 text-center shadow-glass backdrop-blur-xl">
         <SummaryMetric label={reportsText.summary.revenue} value={report.summary.revenue} tone="income" />
         <SummaryMetric label={reportsText.summary.expense} value={report.summary.expense} tone="expense" />
         <SummaryMetric label={reportsText.summary.profit} value={report.summary.profit} tone="profit" />
       </GlassCard>
       <div className="grid items-stretch gap-4 lg:grid-cols-2">
-        <ChartSection title={reportsText.sections.profitByChannel}>
+        <ChartSection title={reportsText.sections.profitByChannel} icon={<Store className="size-4 text-accent" />}>
           <ChannelProfitChart rows={report.profitByChannel} />
         </ChartSection>
-        <ChartSection title={reportsText.sections.expenseByCategory}>
+        <ChartSection title={reportsText.sections.expenseByCategory} icon={<PieChart className="size-4 text-expense" />}>
           <CategoryExpenseChart rows={report.expenseByCategory} />
         </ChartSection>
       </div>
-      <ChartSection title={reportsText.sections.profitTrend}>
-        <ProfitTrendChart rows={report.profitTrend} />
-      </ChartSection>
-      <ChartSection title={reportsText.sections.topProducts}>
+      <ChartSection title={reportsText.sections.topProducts} icon={<Award className="size-4 text-amber-500" />}>
         <TopProducts rows={report.topProducts} />
       </ChartSection>
     </div>
@@ -222,7 +221,7 @@ function currentJakartaMonth(): CalendarCursor {
   }
 }
 
-function makePeriod(cursor: CalendarCursor, mode: PeriodMode): { period: ReportPeriod; label: string } {
+function makePeriod(cursor: CalendarCursor, mode: PeriodMode, lang: string): { period: ReportPeriod; label: string } {
   const start = alignCursor(cursor, mode)
   const end = addMonths(start, periodStep(mode))
   return {
@@ -231,7 +230,7 @@ function makePeriod(cursor: CalendarCursor, mode: PeriodMode): { period: ReportP
       to: jakartaMonthBoundary(end),
       granularity: mode === 'month' ? 'day' : 'month',
     },
-    label: periodLabel(start, end, mode),
+    label: periodLabel(start, end, mode, lang),
   }
 }
 
@@ -256,15 +255,15 @@ function jakartaMonthBoundary(cursor: CalendarCursor): string {
   return new Date(Date.UTC(cursor.year, cursor.month, 1, -7)).toISOString()
 }
 
-function periodLabel(start: CalendarCursor, end: CalendarCursor, mode: PeriodMode): string {
-  if (mode === 'month') return formatMonth(start, 'long')
+function periodLabel(start: CalendarCursor, end: CalendarCursor, mode: PeriodMode, lang: string): string {
+  if (mode === 'month') return formatMonth(start, 'long', lang)
   if (mode === 'year') return String(start.year)
   const finalMonth = addMonths(end, -1)
-  return `${formatMonth(start, 'short')} – ${formatMonth(finalMonth, 'short')}`
+  return `${formatMonth(start, 'short', lang)} – ${formatMonth(finalMonth, 'short', lang)}`
 }
 
-function formatMonth(cursor: CalendarCursor, month: 'short' | 'long'): string {
-  return new Intl.DateTimeFormat('id-ID', {
+function formatMonth(cursor: CalendarCursor, month: 'short' | 'long', lang: string): string {
+  return new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'id-ID', {
     month,
     year: 'numeric',
     timeZone: 'UTC',

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { controlsText } from '@/lib/ui-text/controls'
+import { controlsText } from '@/lib/ui-text'
 import { GlassInput } from '@/components/ui/GlassInput'
 import {
   GlassBottomSheet,

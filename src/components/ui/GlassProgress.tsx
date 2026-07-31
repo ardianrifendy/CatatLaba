@@ -1,27 +1,11 @@
 import { cn } from '@/lib/cn'
+import { useEffect, useState } from 'react'
 
 type GlassProgressProps = {
   value: number
-  label: string
+  label?: string
   className?: string
-  tone?: 'default' | 'warning'
-}
-
-function widthClass(value: number): string {
-  const percent = Math.max(0, Math.min(100, Math.round(value)))
-  if (percent === 0) return 'w-0'
-  if (percent <= 8) return 'w-1/12'
-  if (percent <= 17) return 'w-1/6'
-  if (percent <= 25) return 'w-1/4'
-  if (percent <= 33) return 'w-1/3'
-  if (percent <= 42) return 'w-5/12'
-  if (percent <= 50) return 'w-1/2'
-  if (percent <= 58) return 'w-7/12'
-  if (percent <= 67) return 'w-2/3'
-  if (percent <= 75) return 'w-3/4'
-  if (percent <= 83) return 'w-5/6'
-  if (percent <= 92) return 'w-11/12'
-  return 'w-full'
+  tone?: 'default' | 'warning' | 'danger'
 }
 
 export function GlassProgress({
@@ -30,7 +14,24 @@ export function GlassProgress({
   className,
   tone = 'default',
 }: GlassProgressProps) {
+  const [animatedWidth, setAnimatedWidth] = useState(0)
   const percent = Math.max(0, Math.min(100, Math.round(value)))
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimatedWidth(percent), 50)
+    return () => clearTimeout(timer)
+  }, [percent])
+
+  const isNearMax = percent >= 75 || tone === 'warning' || tone === 'danger'
+
+  const progressBackground = isNearMax
+    ? 'linear-gradient(90deg, #007AFF 0%, #007AFF 75%, #F43F5E 100%)'
+    : 'linear-gradient(90deg, #007AFF 0%, #38BDF8 100%)'
+
+  const glowShadow = isNearMax
+    ? 'shadow-[0_0_10px_rgba(244,63,94,0.4)]'
+    : 'shadow-[0_0_10px_rgba(0,122,255,0.3)]'
+
   return (
     <div
       role="progressbar"
@@ -38,15 +39,38 @@ export function GlassProgress({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={percent}
-      className={cn('h-2 overflow-hidden rounded-full bg-glass-hover', className)}
+      className={cn(
+        'relative h-2.5 w-full overflow-hidden rounded-full bg-glass-hover/80 border border-glass-border/50 p-[1.5px]',
+        className,
+      )}
     >
       <div
+        style={{
+          width: `${animatedWidth}%`,
+          background: progressBackground,
+        }}
         className={cn(
-          'h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none',
-          tone === 'warning' ? 'bg-expense' : 'bg-accent',
-          widthClass(percent),
+          'relative h-full rounded-full transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1)',
+          glowShadow,
         )}
-      />
+      >
+        {/* Subtle Frosted Shimmer Overlay */}
+        <div
+          className="absolute inset-0 w-full h-full opacity-30"
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%)',
+            animation: 'glassShimmer 2.2s infinite ease-in-out',
+          }}
+        />
+      </div>
+
+      <style>{`
+        @keyframes glassShimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
     </div>
   )
 }

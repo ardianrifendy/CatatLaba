@@ -2,10 +2,13 @@ import type { ComponentType } from 'react'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
-import { Plus } from 'lucide-react'
+import { Plus, Search, X, Zap } from 'lucide-react'
+import { useRepos } from '@/app/providers'
+import { seedFullDemoDatabase } from '@/lib/seed/demo-seeder'
 import { useGlobalActionStore } from '@/stores/action'
 import { GlassToastViewport } from '@/components/ui/GlassToast'
 import { GlassConfirmSheet } from '@/components/ui/GlassConfirmSheet'
+import { AppLockOverlay } from '@/components/security/AppLockOverlay'
 import {
   IosChartIcon,
   IosHomeIcon,
@@ -15,7 +18,8 @@ import {
   type IosIconProps,
 } from '@/components/ui/IosIcons'
 import { cn } from '@/lib/cn'
-import { commonText } from '@/lib/ui-text'
+import { commonText, productsText, transactionsText } from '@/lib/ui-text'
+import { useLanguageStore } from '@/stores/language'
 import { useNavStore, type TabId } from '@/stores/nav'
 import { ErrorBoundary } from './ErrorBoundary'
 
@@ -25,19 +29,13 @@ const PengaturanPage = lazy(() => import('./pages/PengaturanPage').then((module)
 const ProdukPage = lazy(() => import('./pages/ProdukPage').then((module) => ({ default: module.ProdukPage })))
 const TransaksiPage = lazy(() => import('./pages/TransaksiPage').then((module) => ({ default: module.TransaksiPage })))
 
+import { useTranslation } from '@/lib/language'
+
 interface TabDef {
   readonly id: TabId
   readonly label: string
   readonly icon: ComponentType<IosIconProps>
 }
-
-const tabs: readonly TabDef[] = [
-  { id: 'beranda', label: commonText.tabs.beranda, icon: IosHomeIcon },
-  { id: 'transaksi', label: commonText.tabs.transaksi, icon: IosReceiptIcon },
-  { id: 'produk', label: commonText.tabs.produk, icon: IosPackageIcon },
-  { id: 'laporan', label: commonText.tabs.laporan, icon: IosChartIcon },
-  { id: 'pengaturan', label: commonText.tabs.pengaturan, icon: IosSettingsIcon },
-]
 
 function ActivePage({ tab }: { tab: TabId }) {
   if (tab === 'beranda') return <BerandaPage />
@@ -56,20 +54,45 @@ function PageLoading() {
 }
 
 export function AppShell() {
+  const { t } = useTranslation()
+  const repos = useRepos()
   const activeTab = useNavStore((state) => state.activeTab)
   const setActiveTab = useNavStore((state) => state.setActiveTab)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [speedDialOpen, setSpeedDialOpen] = useState(false)
   const triggerAction = useGlobalActionStore((s) => s.triggerAction)
 
-  const handleFabClick = () => {
-    if (activeTab === 'produk') {
-      triggerAction('create-product')
-    } else {
-      if (activeTab !== 'transaksi') {
-        setActiveTab('transaksi')
-      }
-      triggerAction('create-transaction')
-    }
+  const tabs: readonly TabDef[] = [
+    { id: 'beranda', label: t('home'), icon: IosHomeIcon },
+    { id: 'transaksi', label: t('transactions'), icon: IosReceiptIcon },
+    { id: 'produk', label: t('products'), icon: IosPackageIcon },
+    { id: 'laporan', label: t('reports'), icon: IosChartIcon },
+    { id: 'pengaturan', label: t('settings'), icon: IosSettingsIcon },
+  ]
+
+  // Seed demo data on initial load
+  useEffect(() => {
+    void seedFullDemoDatabase(repos)
+  }, [repos])
+
+  // Reset speed dial menu whenever user switches tabs
+  useEffect(() => {
+    setSpeedDialOpen(false)
+  }, [activeTab])
+
+  function handleAddProductAction() {
+    setSpeedDialOpen(false)
+    triggerAction('create-product')
+  }
+
+  function handleSearchProductAction() {
+    setSpeedDialOpen(false)
+    triggerAction('search-product')
+  }
+
+  function handleAddTransactionAction() {
+    setSpeedDialOpen(false)
+    triggerAction('create-transaction')
   }
 
   useEffect(() => {
@@ -113,7 +136,6 @@ export function AppShell() {
   }, [])
 
   const subScreenTitle = useNavStore((s) => s.subScreenTitle)
-
   const showFab = activeTab === 'transaksi' || activeTab === 'produk'
 
   return (
@@ -172,16 +194,93 @@ export function AppShell() {
         </main>
       </div>
 
-      {/* Contextual floating action button (+), only on Transaksi & Produk */}
+      {/* Speed Dial Invisible Backdrop to handle click outside without any black opacity */}
+      {speedDialOpen ? (
+        <div
+          role="presentation"
+          onClick={() => setSpeedDialOpen(false)}
+          className="fixed inset-0 z-45 bg-transparent lg:hidden"
+        />
+      ) : null}
+
+      {/* Speed Dial Action Menu & Floating Zap Button */}
       {showFab ? (
-        <button
-          type="button"
-          onClick={handleFabClick}
-          aria-label={activeTab === 'produk' ? 'Tambah Produk' : 'Tambah Transaksi'}
-          className="ios-pressable fixed left-1/2 bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] z-50 flex size-14 -translate-x-1/2 items-center justify-center rounded-full border border-white/40 bg-accent text-white shadow-xl shadow-accent/40 backdrop-blur-xl transition-all duration-200 hover:scale-105 active:scale-95 lg:hidden"
-        >
-          <Plus className="size-7 text-white" aria-hidden="true" strokeWidth={2.5} />
-        </button>
+        <div className="fixed left-1/2 bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] z-50 flex -translate-x-1/2 flex-col items-center gap-3 lg:hidden">
+          {/* Speed Dial Expanded Options */}
+          {speedDialOpen ? (
+            <div
+              className="flex flex-col items-center gap-2.5 origin-bottom"
+              style={{
+                animation: 'iosFabPop 350ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+              }}
+            >
+              {activeTab === 'produk' ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleAddProductAction}
+                    className="ios-pressable flex items-center gap-2.5 rounded-full border border-white/30 bg-accent text-white px-5 py-3 text-xs font-extrabold tracking-wide shadow-xl shadow-accent/35 backdrop-blur-xl transition-all hover:bg-accent/90 active:scale-95"
+                  >
+                    <Plus className="size-4.5 text-white shrink-0" strokeWidth={2.5} />
+                    <span>{productsText.addLabel}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSearchProductAction}
+                    className="ios-pressable flex items-center gap-2.5 rounded-full border border-white/30 bg-accent text-white px-5 py-3 text-xs font-extrabold tracking-wide shadow-xl shadow-accent/35 backdrop-blur-xl transition-all hover:bg-accent/90 active:scale-95"
+                  >
+                    <Search className="size-4.5 text-white shrink-0" strokeWidth={2.5} />
+                    <span>{useLanguageStore.getState().lang === 'en' ? 'Search product' : 'Cari produk'}</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleAddTransactionAction}
+                  className="ios-pressable flex items-center gap-2.5 rounded-full border border-white/30 bg-accent text-white px-5 py-3 text-xs font-extrabold tracking-wide shadow-xl shadow-accent/35 backdrop-blur-xl transition-all hover:bg-accent/90 active:scale-95"
+                >
+                  <Plus className="size-4.5 text-white shrink-0" strokeWidth={2.5} />
+                  <span>{transactionsText.addLabel}</span>
+                </button>
+              )}
+            </div>
+          ) : null}
+
+          {/* Lightning Zap FAB Button */}
+          <button
+            type="button"
+            onClick={() => setSpeedDialOpen((prev) => !prev)}
+            aria-label="Menu Aksi Cepat"
+            className={cn(
+              'ios-pressable flex size-14 items-center justify-center rounded-full border border-white/40 bg-accent text-white shadow-xl shadow-accent/40 backdrop-blur-xl transition-all duration-300 hover:scale-105 active:scale-95',
+              speedDialOpen && 'scale-105 bg-accent/90 ring-4 ring-accent/30',
+            )}
+          >
+            {speedDialOpen ? (
+              <X className="size-7 text-white" aria-hidden="true" strokeWidth={2.5} />
+            ) : (
+              <Zap className="size-7 fill-white/20 text-white" aria-hidden="true" strokeWidth={2.5} />
+            )}
+          </button>
+
+          <style>{`
+            @keyframes iosFabPop {
+              0% {
+                opacity: 0;
+                transform: scale(0.25) translateY(28px);
+              }
+              65% {
+                opacity: 1;
+                transform: scale(1.05) translateY(-3px);
+              }
+              100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+            }
+          `}</style>
+        </div>
       ) : null}
 
       {/* Mobile floating bottom tab bar */}
@@ -218,6 +317,7 @@ export function AppShell() {
       </nav>
 
       <GlassToastViewport />
+      <AppLockOverlay />
 
       <GlassConfirmSheet
         open={showExitConfirm}

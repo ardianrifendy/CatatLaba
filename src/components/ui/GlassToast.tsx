@@ -1,6 +1,6 @@
 import { CircleAlert, CircleCheck } from 'lucide-react'
 import { useToastStore } from '@/stores/toast'
-import { controlsText } from '@/lib/ui-text/controls'
+import { controlsText } from '@/lib/ui-text'
 
 /**
  * Fixed toast stack. Mount once at the app root (F1 mounts this). Sits above

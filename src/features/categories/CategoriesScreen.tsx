@@ -16,6 +16,7 @@ import { queryKeys, RepoError, unwrap } from '@/lib/query'
 import { nowIso } from '@/lib/time'
 import { categoriesText, commonText } from '@/lib/ui-text'
 import { toast } from '@/stores/toast'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { CategoryFormSheet, type CategoryFormValues } from './CategoryFormSheet'
 
 const typeFilterOptions: ReadonlyArray<{ value: Category['type']; label: string }> = [
@@ -27,8 +28,6 @@ function mutationErrorMessage(error: unknown): string {
   return error instanceof RepoError ? error.message : commonText.mutationErrorFallback
 }
 
-// One tappable row (root or child). Roots get the larger icon badge; children
-// sit indented under a connector line. Either way the target stays >= 44px.
 function CategoryRow({
   category,
   child = false,
@@ -38,7 +37,6 @@ function CategoryRow({
   child?: boolean
   onSelect: (category: Category) => void
 }) {
-  const hasIcon = category.icon != null && category.icon !== ''
   return (
     <button
       type="button"
@@ -51,15 +49,15 @@ function CategoryRow({
       <span
         aria-hidden
         className={cn(
-          'flex shrink-0 items-center justify-center rounded-xl border border-glass-border bg-glass',
-          child ? 'size-8 text-sm' : 'size-10 text-lg',
+          'flex shrink-0 items-center justify-center rounded-xl border border-glass-border bg-glass text-accent',
+          child ? 'size-8' : 'size-10',
         )}
       >
-        {hasIcon ? (
-          category.icon
-        ) : (
-          <Tag className={cn('text-zinc-400', child ? 'size-3.5' : 'size-4')} />
-        )}
+        <CategoryIcon
+          icon={category.icon}
+          className={child ? 'size-3.5' : 'size-4 text-accent'}
+          fallbackClassName="text-zinc-400"
+        />
       </span>
       <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">{category.name}</span>
       <ChevronRight aria-hidden className="size-4 shrink-0 text-muted-foreground" />

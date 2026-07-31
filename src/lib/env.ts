@@ -8,6 +8,7 @@ import { z } from 'zod'
 const envSchema = z.object({
   VITE_SUPABASE_URL: z.string().url().optional(),
   VITE_SUPABASE_ANON_KEY: z.string().min(1).optional(),
+  VITE_CLOUDFLARE_TURNSTILE_SITE_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
@@ -20,6 +21,8 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data
+
+export const turnstileSiteKey: string | undefined = env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY
 
 export const hasSupabaseConfig: boolean =
   Boolean(env.VITE_SUPABASE_URL) && Boolean(env.VITE_SUPABASE_ANON_KEY)

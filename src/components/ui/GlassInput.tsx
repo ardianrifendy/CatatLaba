@@ -1,7 +1,7 @@
-import type { ComponentPropsWithoutRef } from 'react'
+import { forwardRef, type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/lib/cn'
 
-type GlassInputProps = ComponentPropsWithoutRef<'input'> & {
+export type GlassInputProps = ComponentPropsWithoutRef<'input'> & {
   error?: boolean
 }
 
@@ -19,15 +19,14 @@ const forbiddenTypes = new Set([
   'range',
 ])
 
-export function GlassInput({
-  className,
-  error = false,
-  type = 'text',
-  ...props
-}: GlassInputProps) {
+export const GlassInput = forwardRef<HTMLInputElement, GlassInputProps>(function GlassInput(
+  { className, error = false, type = 'text', ...props },
+  ref,
+) {
   const safeType = typeof type === 'string' && forbiddenTypes.has(type) ? 'text' : type
   return (
     <input
+      ref={ref}
       type={safeType}
       className={cn(
         'h-11 w-full rounded-2xl border border-glass-border bg-glass px-4 text-sm text-foreground transition-colors',
@@ -40,4 +39,4 @@ export function GlassInput({
       {...props}
     />
   )
-}
+})

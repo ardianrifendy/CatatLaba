@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { transactionsText } from '@/lib/ui-text/transactions'
+import { transactionsText } from '@/lib/ui-text'
 
 export const TRANSACTION_NONE = 'none'
 

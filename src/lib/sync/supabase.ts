@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { requireSupabaseConfig } from '@/lib/env'
 import { commonText } from '@/lib/ui-text'
 import type { SyncSession } from './types'
@@ -34,16 +35,33 @@ export function clearSession(): void {
 
 export function getGoogleOAuthUrl(redirectTo?: string): string {
   const config = requireSupabaseConfig()
-  const redirect = redirectTo ?? window.location.origin
+  let redirect = redirectTo
+  if (!redirect) {
+    const isNative = Capacitor.isNativePlatform() || (typeof window !== 'undefined' && window.location?.origin?.includes('localhost') && window.navigator?.userAgent?.includes('Android'))
+    if (isNative) {
+      redirect = 'com.catatlaba.app://google-auth'
+    } else if (typeof window !== 'undefined' && window.location?.origin) {
+      redirect = window.location.origin
+    } else {
+      redirect = 'com.catatlaba.app://google-auth'
+    }
+  }
   return `${config.url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirect)}`
 }
 
-export function parseOAuthCallbackFromUrl(): SyncSession | null {
+export function parseOAuthCallbackFromUrl(customUrl?: string): SyncSession | null {
   try {
-    const hash = window.location.hash
-    if (!hash || !hash.includes('access_token=')) return null
+    const targetUrl = customUrl ?? (typeof window !== 'undefined' ? window.location.href : '')
+    if (!targetUrl || !targetUrl.includes('access_token=')) return null
     
-    const params = new URLSearchParams(hash.substring(1))
+    // Extract fragment/hash or search params after # or ?
+    const hashIndex = targetUrl.indexOf('#')
+    const queryIndex = targetUrl.indexOf('?')
+    const splitIndex = hashIndex !== -1 ? hashIndex : queryIndex
+    if (splitIndex === -1) return null
+
+    const paramsStr = targetUrl.substring(splitIndex + 1)
+    const params = new URLSearchParams(paramsStr)
     const accessToken = params.get('access_token')
     const refreshToken = params.get('refresh_token')
     const expiresInRaw = params.get('expires_in')
@@ -58,7 +76,8 @@ export function parseOAuthCallbackFromUrl(): SyncSession | null {
     let email: string | null = null
     if (parts.length >= 2 && parts[1]) {
       try {
-        const payload = JSON.parse(atob(parts[1]))
+        const payloadStr = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))
+        const payload = JSON.parse(payloadStr)
         userId = payload.sub ?? ''
         email = payload.email ?? null
       } catch {
@@ -77,8 +96,10 @@ export function parseOAuthCallbackFromUrl(): SyncSession | null {
     }
     
     saveSession(session)
-    // Clean URL hash
-    window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    if (!customUrl && typeof window !== 'undefined') {
+      // Clean URL hash
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
     return session
   } catch {
     return null
@@ -102,6 +123,7 @@ export async function signUpWithPassword(
   password: string,
   fullName?: string,
   phone?: string,
+  captchaToken?: string,
 ): Promise<SyncSession | null> {
   const config = requireSupabaseConfig()
   const payload = await requestJson<AuthPayload | { user: { id: string; email?: string | null } }>(
@@ -112,6 +134,7 @@ export async function signUpWithPassword(
       body: JSON.stringify({
         email,
         password,
+        gotrue_meta_security: captchaToken ? { captcha_token: captchaToken } : undefined,
         data: {
           full_name: fullName ?? null,
           phone_number: phone ?? null,
@@ -120,6 +143,28 @@ export async function signUpWithPassword(
     },
   )
   if (!('access_token' in payload)) return null
+  const session = sessionFromPayload(payload)
+  saveSession(session)
+  return session
+}
+
+export async function verifyOtp(email: string, token: string): Promise<SyncSession> {
+  const config = requireSupabaseConfig()
+  // Supabase Auth verify endpoint supports type 'signup' or 'email' for OTP confirmation
+  let payload: AuthPayload
+  try {
+    payload = await requestJson<AuthPayload>(`${config.url}/auth/v1/verify`, {
+      method: 'POST',
+      headers: authHeaders(config.anonKey),
+      body: JSON.stringify({ type: 'signup', email, token }),
+    })
+  } catch {
+    payload = await requestJson<AuthPayload>(`${config.url}/auth/v1/verify`, {
+      method: 'POST',
+      headers: authHeaders(config.anonKey),
+      body: JSON.stringify({ type: 'email', email, token }),
+    })
+  }
   const session = sessionFromPayload(payload)
   saveSession(session)
   return session
@@ -190,6 +235,8 @@ function remoteMessage(value: unknown): string | null {
     if (message.includes('User already registered')) return 'Email ini sudah terdaftar. Silakan Masuk.'
     if (message.includes('Password should be at least')) return 'Kata sandi minimal 6 karakter.'
     if (message.includes('Invalid login credentials')) return 'Email atau kata sandi salah.'
+    if (message.includes('invalid-input-secret')) return 'Verifikasi Cloudflare gagal: Secret Key pada Supabase Dashboard tidak cocok dengan Site Key Turnstile.'
+    if (message.includes('captcha protection')) return 'Verifikasi keamanan Turnstile gagal. Silakan centang tombol verifikasi di atas.'
     return message
   }
   return null

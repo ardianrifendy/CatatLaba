@@ -12,7 +12,7 @@ import { GlassField } from '@/components/ui/GlassField'
 import { GlassInput } from '@/components/ui/GlassInput'
 import { GlassSelect } from '@/components/ui/GlassSelect'
 import type { Budget, Category } from '@/db/local/schema'
-import { budgetsText } from '@/lib/ui-text/budgets'
+import { budgetsText } from '@/lib/ui-text'
 import {
   budgetFormSchema,
   collectBudgetFieldErrors,

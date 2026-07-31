@@ -5,7 +5,7 @@ import { newId } from '@/lib/id'
 import { queryKeys, RepoError, unwrap } from '@/lib/query'
 import { nowIso } from '@/lib/time'
 import { commonText } from '@/lib/ui-text'
-import { recurringText } from '@/lib/ui-text/recurring'
+import { recurringText } from '@/lib/ui-text'
 import { toast } from '@/stores/toast'
 import type { RecurringFormValues } from './schemas'
 

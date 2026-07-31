@@ -9,7 +9,7 @@ import { GlassInput } from '@/components/ui/GlassInput'
 import { GlassSegmented } from '@/components/ui/GlassSegmented'
 import { GlassSelect, type GlassSelectOption } from '@/components/ui/GlassSelect'
 import type { Category, Channel, RecurringRule, Wallet } from '@/db/local/schema'
-import { recurringText } from '@/lib/ui-text/recurring'
+import { recurringText } from '@/lib/ui-text'
 import { RECURRING_NONE, collectRecurringErrors, recurringFormSchema, type RecurringFormErrors, type RecurringFormValues } from './schemas'
 
 type Props = {

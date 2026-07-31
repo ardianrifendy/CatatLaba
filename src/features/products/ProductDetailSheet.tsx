@@ -9,7 +9,8 @@ import { GlassCard } from '@/components/ui/GlassCard'
 import { GlassEmptyState } from '@/components/ui/GlassEmptyState'
 import { formatIDR } from '@/lib/format'
 import { queryKeys, unwrap } from '@/lib/query'
-import { productsText } from '@/lib/ui-text/products'
+import { productsText } from '@/lib/ui-text'
+import { useLanguageStore } from '@/stores/language'
 
 type Props = {
   open: boolean
@@ -19,6 +20,7 @@ type Props = {
 }
 
 export function ProductDetailSheet({ open, onOpenChange, product, onEdit }: Props) {
+  const lang = useLanguageStore((s) => s.lang)
   const repos = useRepos()
   const historyQuery = useQuery({
     queryKey: queryKeys.productHistory(product?.id ?? ''),
@@ -44,7 +46,7 @@ export function ProductDetailSheet({ open, onOpenChange, product, onEdit }: Prop
               <div className="flex items-center gap-2">
                 <GlassButton variant="primary" className="px-3 py-1.5 text-xs shrink-0" onClick={onEdit}>
                   <Plus aria-hidden className="size-4" />
-                  Tambah Stok / Edit
+                  {lang === 'en' ? 'Add Stock / Edit' : 'Tambah Stok / Edit'}
                 </GlassButton>
               </div>
             </div>
@@ -65,7 +67,7 @@ export function ProductDetailSheet({ open, onOpenChange, product, onEdit }: Prop
             ) : null}
             {!historyQuery.isPending && !historyQuery.isError && (historyQuery.data ?? []).length > 0 ? (
               <div className="flex flex-col gap-2">
-                {(historyQuery.data ?? []).map((entry) => <HistoryRow key={entry.id} entry={entry} unit={product.unit} />)}
+                {(historyQuery.data ?? []).map((entry) => <HistoryRow key={entry.id} entry={entry} unit={product.unit} lang={lang} />)}
               </div>
             ) : null}
           </div>
@@ -84,9 +86,9 @@ function Metric({ label, value }: { label: string; value: string }) {
   )
 }
 
-function HistoryRow({ entry, unit }: { entry: ProductHistoryEntry; unit: string }) {
+function HistoryRow({ entry, unit, lang }: { entry: ProductHistoryEntry; unit: string; lang: string }) {
   const isSale = entry.type === 'income'
-  const date = new Date(entry.occurredAt).toLocaleDateString('id-ID', {
+  const date = new Date(entry.occurredAt).toLocaleDateString(lang === 'en' ? 'en-US' : 'id-ID', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
