@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Cloud, Database, Download, Eye, EyeOff, LogOut, Palette, RefreshCw } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Cloud, Database, Download, Eye, EyeOff, LogOut, Palette, RefreshCw, Shield, Globe, Check } from 'lucide-react'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { GlassCard } from '@/components/ui/GlassCard'
@@ -14,6 +14,9 @@ import { CategoriesScreen } from '@/features/categories/CategoriesScreen'
 import { ChannelsScreen } from '@/features/channels/ChannelsScreen'
 import { WalletsScreen } from '@/features/wallets/WalletsScreen'
 import { RecurringScreen } from '@/features/recurring/RecurringScreen'
+import { SecuritySubScreen } from '@/app/pages/subscreens/SecuritySubScreen'
+import { useSecurityStore } from '@/stores/security'
+import { useLanguageStore, LANGUAGES } from '@/stores/language'
 import { categoriesText, channelsText, commonText, walletsText } from '@/lib/ui-text'
 import {
   IosPackageIcon,
@@ -30,7 +33,7 @@ import { exportJsonFile } from '@/lib/sync/file-export'
 import { queryKeys } from '@/lib/query'
 import { toast } from '@/stores/toast'
 
-type SubScreen = null | 'wallets' | 'categories' | 'channels' | 'recurring' | 'sync' | 'backup' | 'theme'
+type SubScreen = null | 'wallets' | 'categories' | 'channels' | 'recurring' | 'sync' | 'backup' | 'theme' | 'security' | 'language'
 
 interface SettingsRowProps {
   icon: React.ComponentType<{ size?: number; className?: string }>
@@ -416,11 +419,69 @@ function ThemeSubScreen({ onBack }: { onBack: () => void }) {
   )
 }
 
+/* Subscreen: Bahasa Aplikasi */
+function LanguageSubScreen({ onBack }: { onBack: () => void }) {
+  const currentLang = useLanguageStore((s) => s.lang)
+  const setLang = useLanguageStore((s) => s.setLang)
+
+  return (
+    <section className="flex flex-col gap-5">
+      <div className="flex items-center gap-3">
+        <GlassIconButton aria-label="Kembali" onClick={onBack}>
+          <ArrowLeft aria-hidden className="size-5 text-foreground" />
+        </GlassIconButton>
+        <h2 className="flex-1 truncate text-lg font-bold tracking-tight text-foreground">
+          Bahasa Aplikasi
+        </h2>
+      </div>
+
+      <GlassCard className="p-5 flex flex-col gap-4">
+        <div>
+          <p className="text-base font-semibold text-foreground">Pilih Bahasa</p>
+          <p className="text-xs font-normal text-muted-foreground mt-1">
+            Pilih bahasa utama untuk antarmuka pengguna aplikasi.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 mt-2">
+          {LANGUAGES.map((item) => {
+            const isSelected = currentLang === item.code
+            return (
+              <button
+                key={item.code}
+                type="button"
+                onClick={() => {
+                  setLang(item.code)
+                  toast.success(`Bahasa diubah ke ${item.label}`)
+                }}
+                className={`ios-pressable flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                  isSelected
+                    ? 'border-accent/40 bg-accent/10 text-accent font-semibold'
+                    : 'border-glass-border bg-glass/40 hover:bg-glass-hover text-foreground'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{item.flag}</span>
+                  <span className="text-sm">{item.label}</span>
+                </div>
+                {isSelected && <Check className="h-4 w-4 text-accent" />}
+              </button>
+            )
+          })}
+        </div>
+      </GlassCard>
+    </section>
+  )
+}
+
 export function PengaturanPage() {
   const [subScreen, setSubScreenState] = useState<SubScreen>(null)
   const setSubScreenTitle = useNavStore((s) => s.setSubScreenTitle)
   const themeMode = useThemeStore((s) => s.mode)
   const snapshot = useSyncSnapshot()
+
+  const currentLockType = useSecurityStore((s) => s.lockType)
+  const biometricEnabled = useSecurityStore((s) => s.biometricEnabled)
+  const currentLang = useLanguageStore((s) => s.lang)
 
   function openSub(screen: SubScreen, title: string | null) {
     setSubScreenTitle(title)
@@ -446,6 +507,15 @@ export function PengaturanPage() {
         ? snapshot.session.email ?? 'Tersambung'
         : 'Belum masuk'
 
+  const securityBadge =
+    currentLockType === 'none'
+      ? 'Tanpa Kunci'
+      : biometricEnabled
+        ? `${currentLockType.toUpperCase()} + Biometrik`
+        : currentLockType.toUpperCase()
+
+  const languageLabel = LANGUAGES.find((l) => l.code === currentLang)?.label ?? 'Bahasa Indonesia'
+
   if (subScreen !== null) {
     return (
       <div key={subScreen} className="ios-subscreen-enter">
@@ -456,6 +526,8 @@ export function PengaturanPage() {
         {subScreen === 'sync' && <SyncSubScreen onBack={closeSub} />}
         {subScreen === 'backup' && <BackupSubScreen onBack={closeSub} />}
         {subScreen === 'theme' && <ThemeSubScreen onBack={closeSub} />}
+        {subScreen === 'security' && <SecuritySubScreen onBack={closeSub} />}
+        {subScreen === 'language' && <LanguageSubScreen onBack={closeSub} />}
       </div>
     )
   }
@@ -476,7 +548,22 @@ export function PengaturanPage() {
           </GlassCard>
         </div>
 
-        {/* Section 2: Sinkronisasi & Backup */}
+        {/* Section 2: Keamanan & Privasi */}
+        <div className="flex flex-col gap-2">
+          <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Keamanan & Akses
+          </span>
+          <GlassCard className="divide-y divide-glass-border/60 overflow-hidden">
+            <SettingsRow
+              icon={Shield}
+              label="Keamanan & Kunci Aplikasi"
+              badge={securityBadge}
+              onClick={() => openSub('security', 'Keamanan & Kunci Aplikasi')}
+            />
+          </GlassCard>
+        </div>
+
+        {/* Section 3: Sinkronisasi & Backup */}
         <div className="flex flex-col gap-2">
           <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Awan & Cadangan
@@ -497,12 +584,18 @@ export function PengaturanPage() {
           </GlassCard>
         </div>
 
-        {/* Section 3: Tampilan */}
+        {/* Section 4: Tampilan & Bahasa */}
         <div className="flex flex-col gap-2">
           <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Tampilan & Tema
+            Tampilan & Bahasa
           </span>
           <GlassCard className="divide-y divide-glass-border/60 overflow-hidden">
+            <SettingsRow
+              icon={Globe}
+              label="Bahasa Aplikasi"
+              badge={languageLabel}
+              onClick={() => openSub('language', 'Bahasa Aplikasi')}
+            />
             <SettingsRow
               icon={Palette}
               label="Tema Tampilan"
