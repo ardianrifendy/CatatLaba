@@ -10,6 +10,7 @@ type SecurityConfig = {
   biometricEnabled: boolean
   recoveryQuestion?: string
   recoveryAnswerHash?: string
+  pinLength?: number
 }
 
 type SecurityState = SecurityConfig & {
@@ -38,7 +39,7 @@ async function hashSecret(secret: string): Promise<string> {
 
 function readStoredConfig(): SecurityConfig {
   if (typeof window === 'undefined') {
-    return { lockType: 'none', passcodeHash: '', biometricEnabled: false }
+    return { lockType: 'none', passcodeHash: '', biometricEnabled: false, pinLength: 4 }
   }
   try {
     const raw = localStorage.getItem(SECURITY_STORAGE_KEY)
@@ -50,10 +51,11 @@ function readStoredConfig(): SecurityConfig {
         biometricEnabled: Boolean(parsed.biometricEnabled),
         recoveryQuestion: parsed.recoveryQuestion || '',
         recoveryAnswerHash: parsed.recoveryAnswerHash || '',
+        pinLength: parsed.pinLength || 4,
       }
     }
   } catch {}
-  return { lockType: 'none', passcodeHash: '', biometricEnabled: false }
+  return { lockType: 'none', passcodeHash: '', biometricEnabled: false, pinLength: 4 }
 }
 
 function persistConfig(config: SecurityConfig) {
@@ -84,6 +86,13 @@ export const useSecurityStore = create<SecurityState>((set, get) => ({
           : state.passcodeHash
         : ''
 
+    const finalPinLength =
+      lockType === 'pin'
+        ? secret
+          ? secret.length
+          : state.pinLength || 4
+        : state.pinLength || 4
+
     const finalQuestion =
       lockType !== 'none'
         ? recoveryQuestion || state.recoveryQuestion || ''
@@ -102,6 +111,7 @@ export const useSecurityStore = create<SecurityState>((set, get) => ({
       biometricEnabled,
       recoveryQuestion: finalQuestion,
       recoveryAnswerHash,
+      pinLength: finalPinLength,
     }
     persistConfig(config)
     set({ ...config, isLocked: false })

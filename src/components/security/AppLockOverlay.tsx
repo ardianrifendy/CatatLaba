@@ -10,6 +10,7 @@ export function AppLockOverlay() {
   const isLocked = useSecurityStore((s) => s.isLocked)
   const lockType = useSecurityStore((s) => s.lockType)
   const biometricEnabled = useSecurityStore((s) => s.biometricEnabled)
+  const targetPinLength = useSecurityStore((s) => s.pinLength) || 4
   const recoveryQuestion = useSecurityStore((s) => s.recoveryQuestion)
   const recoveryAnswerHash = useSecurityStore((s) => s.recoveryAnswerHash)
   const unlockWithSecret = useSecurityStore((s) => s.unlockWithSecret)
@@ -19,6 +20,7 @@ export function AppLockOverlay() {
 
   // PIN state
   const [pinInput, setPinInput] = useState('')
+  const [isShaking, setIsShaking] = useState(false)
 
   // Pattern state (3x3 grid dots 1..9)
   const [patternDots, setPatternDots] = useState<number[]>([])
@@ -31,6 +33,11 @@ export function AppLockOverlay() {
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [recoveryAnswerInput, setRecoveryAnswerInput] = useState('')
 
+  function triggerShake() {
+    setIsShaking(true)
+    setTimeout(() => setIsShaking(false), 450)
+  }
+
   // Auto trigger biometrics on mount if enabled
   useEffect(() => {
     if (isLocked && biometricEnabled) {
@@ -42,16 +49,19 @@ export function AppLockOverlay() {
 
   // --- PIN KEYPAD HANDLER ---
   async function handlePinDigit(digit: string) {
-    if (pinInput.length >= 6) return
+    if (pinInput.length >= targetPinLength) return
     const nextPin = pinInput + digit
     setPinInput(nextPin)
 
-    // Verify when reaches 4 digits (or 6 digits)
-    if (nextPin.length >= 4) {
+    // Instantly evaluate when PIN reaches exact length
+    if (nextPin.length === targetPinLength) {
       const ok = await unlockWithSecret(nextPin)
-      if (!ok && nextPin.length >= 6) {
+      if (!ok) {
+        triggerShake()
         toast.error('PIN salah. Silakan coba lagi.')
-        setPinInput('')
+        setTimeout(() => {
+          setPinInput('')
+        }, 250)
       }
     }
   }
@@ -97,6 +107,7 @@ export function AppLockOverlay() {
     const patternString = patternDots.join('-')
     const ok = await unlockWithSecret(patternString)
     if (!ok) {
+      triggerShake()
       toast.error('Pola salah. Silakan coba lagi.')
     }
     setPatternDots([])
@@ -107,6 +118,7 @@ export function AppLockOverlay() {
     e.preventDefault()
     const ok = await unlockWithSecret(passwordInput)
     if (!ok) {
+      triggerShake()
       toast.error('Sandi salah. Silakan coba lagi.')
       setPasswordInput('')
     }
@@ -167,9 +179,9 @@ export function AppLockOverlay() {
         {/* 1. PIN KEYPAD INTERFACE */}
         {lockType === 'pin' && (
           <div className="flex flex-col items-center gap-6 w-full">
-            {/* PIN Indicators */}
-            <div className="flex items-center justify-center gap-3 my-2">
-              {[0, 1, 2, 3].map((idx) => {
+            {/* Dynamic PIN Indicators */}
+            <div className={`flex items-center justify-center gap-3 my-2 ${isShaking ? 'ios-shake' : ''}`}>
+              {Array.from({ length: targetPinLength }).map((_, idx) => {
                 const filled = pinInput.length > idx
                 return (
                   <div
