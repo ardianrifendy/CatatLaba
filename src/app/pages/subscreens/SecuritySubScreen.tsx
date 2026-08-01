@@ -6,6 +6,7 @@ import { GlassButton } from '@/components/ui/GlassButton'
 import { GlassIconButton } from '@/components/ui/GlassIconButton'
 import { GlassInput } from '@/components/ui/GlassInput'
 import { GlassField } from '@/components/ui/GlassField'
+import { GlassSelect, type GlassSelectOption } from '@/components/ui/GlassSelect'
 import { useSecurityStore, type LockType } from '@/stores/security'
 import { toast } from '@/stores/toast'
 
@@ -16,6 +17,11 @@ const DEFAULT_RECOVERY_QUESTIONS = [
   'Apa makanan favorit Anda?',
   'Siapa nama panggilan masa kecil Anda?',
 ]
+
+const RECOVERY_QUESTION_OPTIONS: GlassSelectOption[] = DEFAULT_RECOVERY_QUESTIONS.map((q) => ({
+  value: q,
+  label: q,
+}))
 
 export function SecuritySubScreen({ onBack }: { onBack: () => void }) {
   const currentLockType = useSecurityStore((s) => s.lockType)
@@ -366,17 +372,13 @@ export function SecuritySubScreen({ onBack }: { onBack: () => void }) {
               {setupStep === 3 ? (
                 <form onSubmit={handleFinalizeSecuritySetup} className="flex flex-col gap-3.5 w-full text-left">
                   <GlassField label="Pertanyaan Pemulihan">
-                    <select
+                    <GlassSelect
                       value={recoveryQuestion}
-                      onChange={(e) => setRecoveryQuestion(e.target.value)}
-                      className="w-full h-11 px-3 rounded-2xl bg-glass border border-glass-border text-xs text-foreground font-medium focus:outline-none focus:ring-2 focus:ring-accent"
-                    >
-                      {DEFAULT_RECOVERY_QUESTIONS.map((q) => (
-                        <option key={q} value={q} className="bg-background text-foreground">
-                          {q}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => setRecoveryQuestion(val)}
+                      options={RECOVERY_QUESTION_OPTIONS}
+                      placeholder="Pilih Pertanyaan..."
+                      title="Pilih Pertanyaan Pemulihan"
+                    />
                   </GlassField>
 
                   <GlassField label="Jawaban Rahasia Pemulihan">
