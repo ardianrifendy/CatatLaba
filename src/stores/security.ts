@@ -8,13 +8,22 @@ type SecurityConfig = {
   lockType: LockType
   passcodeHash: string
   biometricEnabled: boolean
+  recoveryQuestion?: string
+  recoveryAnswerHash?: string
 }
 
 type SecurityState = SecurityConfig & {
   isLocked: boolean
-  setLockConfig: (type: LockType, secret: string, biometricEnabled?: boolean) => Promise<void>
+  setLockConfig: (
+    type: LockType,
+    secret: string,
+    biometricEnabled?: boolean,
+    recoveryQuestion?: string,
+    recoveryAnswer?: string,
+  ) => Promise<void>
   unlockWithSecret: (secret: string) => Promise<boolean>
   unlockWithBiometrics: () => boolean
+  verifyRecoveryAnswer: (answer: string) => Promise<boolean>
   disableLock: () => void
   lockApp: () => void
 }
@@ -39,6 +48,8 @@ function readStoredConfig(): SecurityConfig {
         lockType: parsed.lockType || 'none',
         passcodeHash: parsed.passcodeHash || '',
         biometricEnabled: Boolean(parsed.biometricEnabled),
+        recoveryQuestion: parsed.recoveryQuestion || '',
+        recoveryAnswerHash: parsed.recoveryAnswerHash || '',
       }
     }
   } catch {}
@@ -57,9 +68,41 @@ export const useSecurityStore = create<SecurityState>((set, get) => ({
   ...initialConfig,
   isLocked: initialConfig.lockType !== 'none',
 
-  setLockConfig: async (lockType, secret, biometricEnabled = false) => {
-    const passcodeHash = lockType !== 'none' ? await hashSecret(secret) : ''
-    const config: SecurityConfig = { lockType, passcodeHash, biometricEnabled }
+  setLockConfig: async (
+    lockType,
+    secret,
+    biometricEnabled = false,
+    recoveryQuestion = '',
+    recoveryAnswer = '',
+  ) => {
+    const state = get()
+    // Preserve secret hash if secret is empty string when only toggling biometrics/recovery
+    const passcodeHash =
+      lockType !== 'none'
+        ? secret
+          ? await hashSecret(secret)
+          : state.passcodeHash
+        : ''
+
+    const finalQuestion =
+      lockType !== 'none'
+        ? recoveryQuestion || state.recoveryQuestion || ''
+        : ''
+
+    const recoveryAnswerHash =
+      lockType !== 'none'
+        ? recoveryAnswer
+          ? await hashSecret(recoveryAnswer.trim().toLowerCase())
+          : state.recoveryAnswerHash || ''
+        : ''
+
+    const config: SecurityConfig = {
+      lockType,
+      passcodeHash,
+      biometricEnabled,
+      recoveryQuestion: finalQuestion,
+      recoveryAnswerHash,
+    }
     persistConfig(config)
     set({ ...config, isLocked: false })
   },
@@ -87,8 +130,25 @@ export const useSecurityStore = create<SecurityState>((set, get) => ({
     return false
   },
 
+  verifyRecoveryAnswer: async (answer) => {
+    const { recoveryAnswerHash } = get()
+    if (!recoveryAnswerHash) return false
+    const hash = await hashSecret(answer.trim().toLowerCase())
+    if (hash === recoveryAnswerHash) {
+      get().disableLock()
+      return true
+    }
+    return false
+  },
+
   disableLock: () => {
-    const config: SecurityConfig = { lockType: 'none', passcodeHash: '', biometricEnabled: false }
+    const config: SecurityConfig = {
+      lockType: 'none',
+      passcodeHash: '',
+      biometricEnabled: false,
+      recoveryQuestion: '',
+      recoveryAnswerHash: '',
+    }
     persistConfig(config)
     set({ ...config, isLocked: false })
   },

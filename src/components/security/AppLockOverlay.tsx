@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Delete, Fingerprint, Lock } from 'lucide-react'
+import { Delete, Fingerprint, Lock, HelpCircle } from 'lucide-react'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { GlassButton } from '@/components/ui/GlassButton'
 import { GlassInput } from '@/components/ui/GlassInput'
@@ -10,8 +10,11 @@ export function AppLockOverlay() {
   const isLocked = useSecurityStore((s) => s.isLocked)
   const lockType = useSecurityStore((s) => s.lockType)
   const biometricEnabled = useSecurityStore((s) => s.biometricEnabled)
+  const recoveryQuestion = useSecurityStore((s) => s.recoveryQuestion)
+  const recoveryAnswerHash = useSecurityStore((s) => s.recoveryAnswerHash)
   const unlockWithSecret = useSecurityStore((s) => s.unlockWithSecret)
   const unlockWithBiometrics = useSecurityStore((s) => s.unlockWithBiometrics)
+  const verifyRecoveryAnswer = useSecurityStore((s) => s.verifyRecoveryAnswer)
   const disableLock = useSecurityStore((s) => s.disableLock)
 
   // PIN state
@@ -24,8 +27,9 @@ export function AppLockOverlay() {
   // Password state
   const [passwordInput, setPasswordInput] = useState('')
 
-  // Reset confirmation state
+  // Reset confirmation / recovery state
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [recoveryAnswerInput, setRecoveryAnswerInput] = useState('')
 
   // Auto trigger biometrics on mount if enabled
   useEffect(() => {
@@ -115,6 +119,23 @@ export function AppLockOverlay() {
       toast.success('Buka kunci dengan Biometrik berhasil!')
     } else {
       toast.error('Biometrik gagal atau belum terverifikasi.')
+    }
+  }
+
+  // --- RECOVERY ANSWER VERIFICATION ---
+  async function handleVerifyRecovery(e?: React.FormEvent) {
+    if (e) e.preventDefault()
+    if (!recoveryAnswerInput.trim()) {
+      toast.error('Masukkan jawaban pemulihan Anda.')
+      return
+    }
+    const ok = await verifyRecoveryAnswer(recoveryAnswerInput)
+    if (ok) {
+      setShowResetConfirm(false)
+      setRecoveryAnswerInput('')
+      toast.success('Jawaban pemulihan benar. Pengunci aplikasi telah dinonaktifkan!')
+    } else {
+      toast.error('Jawaban pemulihan salah. Silakan coba lagi.')
     }
   }
 
@@ -258,7 +279,7 @@ export function AppLockOverlay() {
           </form>
         )}
 
-        {/* Emergency Reset Button */}
+        {/* Emergency Reset / Recovery Option */}
         <div className="flex flex-col gap-2 w-full pt-2 border-t border-glass-border/40">
           {!showResetConfirm ? (
             <button
@@ -268,24 +289,63 @@ export function AppLockOverlay() {
             >
               Lupa Passcode / Reset Pengunci?
             </button>
+          ) : recoveryQuestion && recoveryAnswerHash ? (
+            /* Recovery Question Challenge Form */
+            <form onSubmit={handleVerifyRecovery} className="flex flex-col gap-3 p-3.5 rounded-2xl bg-glass/80 border border-glass-border text-left">
+              <div className="flex items-center gap-1.5 text-accent">
+                <HelpCircle className="size-4 shrink-0" />
+                <p className="text-xs font-bold text-foreground">Pemulihan Kunci Keamanan</p>
+              </div>
+              <p className="text-xs font-semibold text-foreground leading-snug">
+                {recoveryQuestion}
+              </p>
+              <GlassInput
+                type="text"
+                placeholder="Masukkan jawaban Anda..."
+                value={recoveryAnswerInput}
+                onChange={(e) => setRecoveryAnswerInput(e.target.value)}
+                autoFocus
+                className="h-10 text-xs"
+              />
+              <div className="flex items-center gap-2 mt-1">
+                <GlassButton
+                  variant="ghost"
+                  onClick={() => {
+                    setShowResetConfirm(false)
+                    setRecoveryAnswerInput('')
+                  }}
+                  className="flex-1 h-9 text-xs"
+                >
+                  Batal
+                </GlassButton>
+                <GlassButton
+                  variant="primary"
+                  type="submit"
+                  className="flex-1 h-9 text-xs font-bold"
+                >
+                  Verifikasi
+                </GlassButton>
+              </div>
+            </form>
           ) : (
-            <div className="flex flex-col gap-2 p-3 rounded-2xl bg-destructive/10 border border-destructive/20 text-left">
+            /* Emergency Reset Confirmation (High Contrast Danger Button) */
+            <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-expense/10 border border-expense/25 text-left">
               <p className="text-xs text-foreground font-semibold">Reset Kunci Keamanan?</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
                 Kunci aplikasi akan dinonaktifkan tanpa menghapus data keuangan Anda.
               </p>
               <div className="flex items-center gap-2 mt-1">
                 <GlassButton
                   variant="ghost"
                   onClick={() => setShowResetConfirm(false)}
-                  className="flex-1 h-8 text-xs"
+                  className="flex-1 h-9 text-xs font-medium"
                 >
                   Batal
                 </GlassButton>
                 <GlassButton
-                  variant="primary"
+                  variant="danger"
                   onClick={handleResetSecurity}
-                  className="flex-1 h-8 text-xs bg-destructive text-white"
+                  className="flex-1 h-9 text-xs font-bold shadow-sm"
                 >
                   Reset Kunci
                 </GlassButton>
