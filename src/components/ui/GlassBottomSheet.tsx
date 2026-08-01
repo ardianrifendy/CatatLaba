@@ -19,11 +19,11 @@ export function GlassBottomSheetContent({
 }: ContentProps) {
   return (
     <Dialog.Portal>
-      <Dialog.Overlay className="sheet-overlay fixed inset-0 z-40 bg-overlay" />
+      <Dialog.Overlay className="sheet-overlay fixed inset-0 z-[10000] bg-overlay backdrop-blur-sm" />
       <Dialog.Content
         onOpenAutoFocus={(event) => event.preventDefault()}
         className={cn(
-          'sheet-content fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg',
+          'sheet-content fixed inset-x-0 bottom-0 z-[10001] mx-auto max-w-lg',
           'rounded-t-3xl border-t border-glass-border bg-glass-strong text-foreground shadow-glass backdrop-blur-md',
           'p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]',
           'focus:outline-none',

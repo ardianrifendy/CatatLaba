@@ -17,7 +17,7 @@ export function GlassToastViewport() {
       role="status"
       aria-live="polite"
       aria-label={controlsText.notifications}
-      className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+6rem)] z-[60] flex flex-col items-center gap-2 px-4 lg:bottom-6"
+      className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+6rem)] z-[20000] flex flex-col items-center gap-2 px-4 lg:bottom-6"
     >
       {toasts.map((item) => (
         <button
