@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Cloud, Database, Download, Eye, EyeOff, LogOut, Palette, RefreshCw, Shield, Globe, Check, Info } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Cloud, Database, Download, Eye, EyeOff, LogOut, Palette, RefreshCw, Shield, Globe, Check, Info, Store } from 'lucide-react'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { GlassCard } from '@/components/ui/GlassCard'
@@ -10,6 +10,7 @@ import { GlassInput } from '@/components/ui/GlassInput'
 import { GlassSegmented } from '@/components/ui/GlassSegmented'
 import { ThemeSelector } from '@/components/ThemeSelector'
 import { CloudflareTurnstile } from '@/components/security/CloudflareTurnstile'
+import { BusinessPresetsScreen } from '@/components/presets/BusinessPresetsScreen'
 import { CategoriesScreen } from '@/features/categories/CategoriesScreen'
 import { ChannelsScreen } from '@/features/channels/ChannelsScreen'
 import { WalletsScreen } from '@/features/wallets/WalletsScreen'
@@ -32,8 +33,9 @@ import { exportBackup, importBackup } from '@/lib/sync/backup'
 import { exportJsonFile } from '@/lib/sync/file-export'
 import { queryKeys } from '@/lib/query'
 import { toast } from '@/stores/toast'
+import { getActivePresetMetadata } from '@/lib/presets/applier'
 
-type SubScreen = null | 'wallets' | 'categories' | 'channels' | 'recurring' | 'sync' | 'backup' | 'theme' | 'security' | 'language' | 'about'
+type SubScreen = null | 'presets' | 'wallets' | 'categories' | 'channels' | 'recurring' | 'sync' | 'backup' | 'theme' | 'security' | 'language' | 'about'
 
 interface SettingsRowProps {
   icon: React.ComponentType<{ size?: number; className?: string }>
@@ -563,10 +565,13 @@ export function PengaturanPage() {
         : currentLockType.toUpperCase()
 
   const languageLabel = LANGUAGES.find((l) => l.code === currentLang)?.label ?? 'Bahasa Indonesia'
+  const activePreset = getActivePresetMetadata()
+  const presetBadge = activePreset ? activePreset.name : 'Pilih Preset'
 
   if (subScreen !== null) {
     return (
       <div key={subScreen} className="ios-subscreen-enter">
+        {subScreen === 'presets' && <BusinessPresetsScreen onBack={closeSub} />}
         {subScreen === 'wallets' && <WalletsScreen onBack={closeSub} />}
         {subScreen === 'categories' && <CategoriesScreen onBack={closeSub} />}
         {subScreen === 'channels' && <ChannelsScreen onBack={closeSub} />}
@@ -584,12 +589,18 @@ export function PengaturanPage() {
   return (
     <div key="main-settings" className="ios-subscreen-enter">
       <section className="flex flex-col gap-6">
-        {/* Section 1: Kelola Data */}
+        {/* Section 1: Kelola Data & Preset */}
         <div className="flex flex-col gap-2">
           <span className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Kelola Data
+            Kelola Data & Preset Usaha
           </span>
           <GlassCard className="divide-y divide-glass-border/60 overflow-hidden">
+            <SettingsRow
+              icon={Store}
+              label="Preset Jenis Usaha (Auto Setup)"
+              badge={presetBadge}
+              onClick={() => openSub('presets', 'Preset Jenis Usaha')}
+            />
             <SettingsRow icon={IosWalletIcon} label={walletsText.title} onClick={() => openSub('wallets', walletsText.title)} />
             <SettingsRow icon={IosPackageIcon} label={categoriesText.title} onClick={() => openSub('categories', categoriesText.title)} />
             <SettingsRow icon={IosReceiptIcon} label={channelsText.title} onClick={() => openSub('channels', channelsText.title)} />

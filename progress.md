@@ -26,7 +26,8 @@
 ## ⚙️ 3. Struktur Halaman Pengaturan (Settings Hub)
 Seluruh sub-halaman Pengaturan telah dikonsolidasi dan berfungsi 100%:
 
-1. **Kelola Data**:
+1. **Kelola Data & Preset**:
+   - 🏪 **Preset Jenis Usaha** (Auto-Setup preset kategori, saluran penjualan, & dompet sesuai bidang toko/UMKM)
    - 💳 **Wallets** (Kelola Rekening & Dompet)
    - 📦 **Categories** (Kategori Pemasukan / Pengeluaran)
    - 🧾 **Channels** (Saluran Penjualan)
